@@ -234,6 +234,13 @@ private let today = OrgDate(year: 2026, month: 10, day: 17)
         #expect(last.text == "* A\n* B\n** C\n")
     }
 
+    @Test func removalCanBeUndoneInPlace() {
+        var doc = OrgDocument(text: text)
+        let removed = doc.removeSubtree(at: 0)!
+        doc.insertLines(removed, at: 0)
+        #expect(doc.text == text)
+    }
+
     @Test func previewSkipsStampsAndMarkup() {
         let doc = OrgDocument(text: text)
         let h = doc.headlines[0]

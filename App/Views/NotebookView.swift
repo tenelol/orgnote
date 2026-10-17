@@ -53,6 +53,12 @@ struct NotebookView: View {
                 }
             }
             .toolbar {
+                if fileID == store.inboxPath, !groups.isEmpty {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("整理する", systemImage: "rectangle.stack") { router.showTriage = true }
+                            .labelStyle(.titleAndIcon)
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink(value: Route.file(fileID, line: nil)) {
                         Label("全体をテキストで開く", systemImage: "doc.plaintext")
@@ -191,7 +197,7 @@ struct MemoCard: View {
                 // A checklist shows as the progress bar below, not as preview text.
                 let preview = document.preview(of: headline, includingChecklists: headline.checkboxes.total == 0)
                 if !preview.isEmpty {
-                    Text(preview)
+                    Text(OrgInline.render(preview))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)

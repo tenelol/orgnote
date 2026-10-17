@@ -32,6 +32,7 @@ enum Route: Hashable, Codable {
 final class AppRouter {
     static let shared = AppRouter()
     var showCapture = false
+    var showTriage = false
     /// Set to switch tabs from inside a tab, e.g. the "today" tile.
     var requestedTab: AppTab?
     /// One-shot request to capture into a given file instead of the default.

@@ -453,6 +453,13 @@ public struct OrgDocument: Sendable {
         return insertAt
     }
 
+    /// Puts lines back at `index`, e.g. to undo a removal.
+    public mutating func insertLines(_ inserted: [String], at index: Int) {
+        if lines.last != "" { lines.append("") }
+        lines.insert(contentsOf: inserted, at: min(max(index, 0), contentEnd))
+        reparse()
+    }
+
     /// Index just past the last line of content, before the final newline's empty element.
     private var contentEnd: Int { lines.last == "" ? lines.count - 1 : lines.count }
 

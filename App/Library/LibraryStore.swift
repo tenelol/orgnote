@@ -473,10 +473,17 @@ final class LibraryStore {
     }
 
     /// Deletes an entry with its subtree, keeping a copy in the app's backups.
-    func deleteEntry(_ id: String, line: Int) {
-        guard let file = files[id], let removed = file.document.subtree(at: line) else { return }
+    /// Returns the removed lines so the deletion can be undone.
+    @discardableResult
+    func deleteEntry(_ id: String, line: Int) -> [String]? {
+        guard let file = files[id], let removed = file.document.subtree(at: line) else { return nil }
         FolderIO.backup(removed.joined(separator: file.document.newline), name: "deleted-\(file.name)")
         edit(id) { $0.removeSubtree(at: line) }
+        return removed
+    }
+
+    func restoreEntry(_ lines: [String], in id: String, at line: Int) {
+        edit(id) { $0.insertLines(lines, at: line) }
     }
 
     /// Refiles an entry with its subtree under `parent` in `target`, or at the

@@ -111,12 +111,12 @@ struct LibraryView: View {
     private var smartTiles: some View {
         let agenda = store.agenda()
         let today = agenda.overdue.count + (agenda.days.first?.items.filter { !$0.headline.isDone }.count ?? 0)
-        let unsorted = store.inbox?.document.headlines.filter { $0.level == 1 }.count ?? 0
+        let unsorted = store.inbox?.document.headlines.filter { $0.level == 1 && !$0.isDone }.count ?? 0
         return HStack(spacing: 12) {
             Button { router.requestedTab = .agenda } label: {
                 SmartTile(symbol: "calendar", tint: .red, count: today, title: "今日")
             }
-            NavigationLink(value: Route.notebook(store.inboxPath)) {
+            Button { router.showTriage = true } label: {
                 SmartTile(symbol: "tray", tint: .accentColor, count: unsorted, title: "未整理")
             }
         }

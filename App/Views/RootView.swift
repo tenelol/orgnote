@@ -28,6 +28,9 @@ struct RootView: View {
         .sheet(isPresented: $router.showCapture) {
             CaptureView()
         }
+        .fullScreenCover(isPresented: $router.showTriage) {
+            TriageView()
+        }
         .alert(
             store.conflict.map { "\(($0.fileID as NSString).lastPathComponent) が他の端末でも変更されました" } ?? "",
             isPresented: Binding { store.conflict != nil } set: { if !$0 { store.conflict = nil } },
