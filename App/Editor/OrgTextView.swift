@@ -595,8 +595,10 @@ private final class KeyboardBar: UIView {
 
         func command(_ label: String, symbol: String? = nil, title: String? = nil, _ command: EditorCommand) -> UIButton {
             let b = button(label, symbol: symbol, title: title)
-            b.addAction(UIAction { [weak controller] _ in
+            b.addAction(UIAction { [weak controller, weak textView] _ in
                 guard let controller else { return }
+                // Commit any in-progress IME composition first, or the edit would be dropped.
+                textView?.unmarkText()
                 controller.onCommand(command, controller.currentLine)
             }, for: .primaryActionTriggered)
             return b
@@ -612,8 +614,10 @@ private final class KeyboardBar: UIView {
         func planningMenu(_ kind: PlanningKind, _ label: String) -> UIMenu {
             func action(_ title: String, _ image: String, _ choice: PlanningChoice, destructive: Bool = false) -> UIAction {
                 UIAction(title: title, image: UIImage(systemName: image), attributes: destructive ? .destructive : []) {
-                    [weak controller] _ in
+                    [weak controller, weak textView] _ in
                     guard let controller else { return }
+                // Commit any in-progress IME composition first, or the edit would be dropped.
+                textView?.unmarkText()
                     controller.onCommand(.planning(kind, choice), controller.currentLine)
                 }
             }
@@ -628,12 +632,16 @@ private final class KeyboardBar: UIView {
 
         let priority = UIMenu(title: "優先度", children:
             [("A", "高"), ("B", "中"), ("C", "低")].map { value, title in
-                UIAction(title: "\(title)  [#\(value)]") { [weak controller] _ in
+                UIAction(title: "\(title)  [#\(value)]") { [weak controller, weak textView] _ in
                     guard let controller else { return }
+                // Commit any in-progress IME composition first, or the edit would be dropped.
+                textView?.unmarkText()
                     controller.onCommand(.priority(value), controller.currentLine)
                 }
-            } + [UIAction(title: "なし", attributes: .destructive) { [weak controller] _ in
+            } + [UIAction(title: "なし", attributes: .destructive) { [weak controller, weak textView] _ in
                 guard let controller else { return }
+                // Commit any in-progress IME composition first, or the edit would be dropped.
+                textView?.unmarkText()
                 controller.onCommand(.priority(nil), controller.currentLine)
             }])
 

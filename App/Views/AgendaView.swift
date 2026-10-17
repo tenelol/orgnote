@@ -1,8 +1,8 @@
 import OrgKit
 import SwiftUI
 
-/// A week at a glance: a strip of days with dots, today's progress ring, and
-/// the chosen day split into all-day items and a timeline.
+/// Days at a glance: a freely scrolling strip of days with dots, today's
+/// progress ring, and the chosen day split into all-day items and a timeline.
 struct AgendaView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(NotebookStyles.self) private var styles
@@ -10,27 +10,19 @@ struct AgendaView: View {
     @State private var showsOverdue = true
 
     private var today: OrgDate { OrgDate(.now) }
-
-    /// The week containing `selected`, starting on the locale's first weekday.
-    private var weekStart: OrgDate {
-        let calendar = Calendar.current
-        let weekday = calendar.component(.weekday, from: selected.date())
-        return selected.adding(days: -((weekday - calendar.firstWeekday + 7) % 7))
-    }
+    /// How far the strip reaches either side of today.
+    private static let reach = 180
 
     var body: some View {
-        let week = store.agenda(from: weekStart, days: 7)
+        let first = today.adding(days: -Self.reach)
+        let span = store.agenda(from: first, days: Self.reach * 2 + 1)
+        let byDay = Dictionary(uniqueKeysWithValues: span.days.map { ($0.date, $0.items) })
         let overdue = store.agenda(from: today, days: 1).overdue
-        let day = week.days.first { $0.date == selected }?.items ?? []
+        let day = byDay[selected] ?? []
         let allDay = day.filter { $0.time == nil }
         let timed = day.filter { $0.time != nil }
 
         List {
-            Section {
-                WeekStrip(start: weekStart, selected: $selected, today: today, days: week.days)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
-            }
-
             if selected == today, !overdue.isEmpty {
                 Section {
                     DisclosureGroup(isExpanded: $showsOverdue) {
@@ -88,6 +80,15 @@ struct AgendaView: View {
             }
         }
         .listStyle(.insetGrouped)
+        // Pinned above the list, as in Calendar; inside a row, list updates would cross-fade the slide.
+        .safeAreaInset(edge: .top, spacing: 0) {
+            DayStrip(dates: (0...(Self.reach * 2)).map { first.adding(days: $0) },
+                     selected: $selected, today: today, items: byDay)
+                .padding(.horizontal, 8)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+        }
         .navigationTitle(title)
         .navigationSubtitle(selected.date().formatted(.dateTime.month().day().weekday(.wide)))
         .toolbar {
@@ -151,51 +152,66 @@ struct AgendaView: View {
     }
 }
 
-/// Seven days with a dot for days that have something; swipe to change weeks.
-private struct WeekStrip: View {
-    var start: OrgDate
+/// A strip of days that scrolls freely with momentum and settles on a day
+/// boundary. Seven days fit the width; a dot marks days with something on.
+private struct DayStrip: View {
+    var dates: [OrgDate]
     @Binding var selected: OrgDate
     var today: OrgDate
-    var days: [AgendaDay]
-
+    var items: [OrgDate: [AgendaItem]]
     var body: some View {
-        HStack(spacing: 4) {
-            ForEach(0..<7, id: \.self) { offset in
-                let date = start.adding(days: offset)
-                let items = days.first { $0.date == date }?.items ?? []
-                Button {
-                    withAnimation(.snappy) { selected = date }
-                } label: {
-                    VStack(spacing: 4) {
-                        Text(date.date().formatted(.dateTime.weekday(.narrow)))
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                        Text("\(date.day)")
-                            .font(.body.weight(date == selected ? .bold : .regular).monospacedDigit())
-                            .foregroundStyle(foreground(date))
-                            .frame(width: 34, height: 34)
-                            .background {
-                                if date == selected { Circle().fill(date == today ? Color.accentColor : Color.primary) }
-                            }
-                        Circle().fill(dot(items)).frame(width: 5, height: 5)
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                // Eager on purpose: a lazy stack here, inside the list's top inset, drew nothing.
+                HStack(spacing: 0) {
+                    ForEach(dates, id: \.self) { date in
+                        day(date)
+                            .frame(width: Self.cellWidth)
+                            .id(date)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 64)
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(date.date().formatted(.dateTime.month().day().weekday(.wide))
-                    + (items.isEmpty ? "" : "、\(items.count)件"))
-                .accessibilityAddTraits(date == selected ? .isSelected : [])
+                .scrollTargetLayout()
             }
+            .scrollTargetBehavior(.viewAligned)
+            .frame(height: 72)
+            .onAppear { proxy.scrollTo(selected, anchor: .center) }
+            // A tapped day, or the Today button, glides to the center.
+            .onChange(of: selected) { _, date in withAnimation(.snappy) { proxy.scrollTo(date, anchor: .center) } }
         }
-        .contentShape(Rectangle())
-        .gesture(
-            DragGesture(minimumDistance: 30).onEnded { value in
-                guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                withAnimation(.snappy) { selected = selected.adding(days: value.translation.width < 0 ? 7 : -7) }
-            }
-        )
         .sensoryFeedback(.selection, trigger: selected)
+    }
+
+    /// Seven days across a phone screen.
+    private static var cellWidth: CGFloat {
+        let width = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.screen.bounds.width ?? 390
+        return (width - 48) / 7
+    }
+
+    private func day(_ date: OrgDate) -> some View {
+        let items = items[date] ?? []
+        return Button {
+            withAnimation(.snappy) { selected = date }
+        } label: {
+            VStack(spacing: 4) {
+                Text(date.day == 1 ? date.date().formatted(.dateTime.month(.abbreviated)) : date.date().formatted(.dateTime.weekday(.narrow)))
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(date.day == 1 ? Color.accentColor : Color.secondary)
+                Text("\(date.day)")
+                    .font(.body.weight(date == selected ? .bold : .regular).monospacedDigit())
+                    .foregroundStyle(foreground(date))
+                    .frame(width: 34, height: 34)
+                    .background {
+                        if date == selected { Circle().fill(date == today ? Color.accentColor : Color.primary) }
+                    }
+                Circle().fill(dot(items)).frame(width: 5, height: 5)
+            }
+            .frame(maxWidth: .infinity, minHeight: 64)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(date.date().formatted(.dateTime.month().day().weekday(.wide))
+            + (items.isEmpty ? "" : "、\(items.count)件"))
+        .accessibilityAddTraits(date == selected ? .isSelected : [])
     }
 
     private func foreground(_ date: OrgDate) -> Color {
