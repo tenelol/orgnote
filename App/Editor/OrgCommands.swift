@@ -19,8 +19,12 @@ enum OrgCommands {
         switch command {
         case .heading:
             let current = document.lines[line]
-            if document.headline(at: line) != nil {
-                replace(line, with: "*" + current, in: &document)
+            if let headline = document.headline(at: line) {
+                // Cycles 1 → 2 → 3 → body text. Deeper levels look the same as
+                // level 3, so stars kept piling up on taps that seemed to do nothing.
+                let rest = current.drop { $0 == "*" }.drop { $0 == " " || $0 == "\t" }
+                replace(line, with: headline.level >= 3 ? String(rest)
+                    : String(repeating: "*", count: headline.level + 1) + " " + rest, in: &document)
             } else {
                 // Leading indentation would stop Org from seeing a headline.
                 replace(line, with: "* " + current.drop { $0 == " " || $0 == "\t" }, in: &document)
