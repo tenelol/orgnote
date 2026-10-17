@@ -1,15 +1,15 @@
 import EventKit
 import SwiftUI
+import UserNotifications
 
 struct SettingsView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(CalendarEvents.self) private var events
     @AppStorage("captureAsTodo") private var asTodo = false
-    @AppStorage(TaskNotifications.leadKey) private var lead = 0
     @State private var picking = false
-    @State private var notifies = TaskNotifications.shared.isEnabled
     @State private var denied: String?
+    @State private var notificationsBlocked = false
 
     var body: some View {
         @Bindable var store = store
@@ -52,20 +52,24 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Toggle("時刻付きの予定を通知", isOn: $notifies)
-                    if notifies {
-                        Picker("タイミング", selection: $lead) {
-                            Text("時刻ちょうど").tag(0)
-                            Text("5分前").tag(5)
-                            Text("10分前").tag(10)
-                            Text("30分前").tag(30)
-                            Text("1時間前").tag(60)
+                    if notificationsBlocked {
+                        Button("通知を許可する…") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                         }
+                    }
+                    ForEach(TaskNotifications.shared.reminders) { reminder in
+                        LabeledContent(reminder.title.isEmpty ? "無題" : reminder.title,
+                                       value: reminder.date.formatted(.dateTime.month().day().hour().minute()))
+                            .swipeActions {
+                                Button("削除", systemImage: "trash", role: .destructive) {
+                                    TaskNotifications.shared.remove(reminder)
+                                }
+                            }
                     }
                 } header: {
                     Text("通知")
                 } footer: {
-                    Text("予定日・期限・予定に時刻があり、まだ完了していないものを知らせます。Macで変えた内容は、次にOrgnoteを開いたときに反映されます。")
+                    Text("新規メモの「通知を追加」で設定します。通知はこのiPhoneだけに保存され、ファイルには書き込みません。完了したTODOの通知は鳴りません。")
                 }
 
                 Section {
@@ -75,16 +79,9 @@ struct SettingsView: View {
                     Text("ファイルに #+TODO: 行があれば、そのキーワードを使います。バックアップには、競合したときに残さなかった版が入ります。")
                 }
             }
-            .onChange(of: notifies) { _, on in
-                guard on != TaskNotifications.shared.isEnabled else { return }
-                Task {
-                    if await !TaskNotifications.shared.setEnabled(on) {
-                        notifies = false
-                        denied = "通知"
-                    }
-                }
+            .task {
+                notificationsBlocked = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus == .denied
             }
-            .onChange(of: lead) { _, minutes in TaskNotifications.shared.setLead(minutes) }
             .alert("\(denied ?? "")が許可されていません", isPresented: Binding { denied != nil } set: { if !$0 { denied = nil } }) {
                 Button("設定を開く") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }

@@ -2,104 +2,113 @@ import OrgKit
 import UIKit
 import UserNotifications
 
-/// Local notifications for entries with a time, such as
-/// `SCHEDULED: <2026-10-20 Tue 10:00>`. They are rebuilt from the files
-/// whenever the app sees a change, so edits made on the Mac arrive the next
-/// time Orgnote runs.
-@MainActor
+/// A notification set from the capture sheet. It lives only in the app, so
+/// the Org files stay exactly as written; the entry is found again by title.
+struct Reminder: Codable, Identifiable, Hashable {
+    var id = UUID()
+    var fileID: String
+    var title: String
+    var date: Date
+}
+
+/// Local notifications for the entries given one in the app. They are kept
+/// in this device's settings and handed to iOS, skipping entries since done.
+@MainActor @Observable
 final class TaskNotifications: NSObject {
     static let shared = TaskNotifications()
-    static let enabledKey = "notificationsEnabled"
-    static let leadKey = "notificationLeadMinutes"
+    private static let key = "reminders"
     /// iOS keeps at most 64 pending notifications per app.
     private static let limit = 60
-    /// How far ahead to look; the next run of the app tops the list up.
-    private static let horizon = 14
 
-    private let center = UNUserNotificationCenter.current()
-    private var scheduled: [String: Date] = [:]
-    private var synced = false
+    private(set) var reminders: [Reminder]
+    @ObservationIgnored private let center = UNUserNotificationCenter.current()
+    @ObservationIgnored private var scheduled: [String: Date] = [:]
+    @ObservationIgnored private var synced = false
 
-    var isEnabled: Bool { UserDefaults.standard.bool(forKey: Self.enabledKey) }
-    var leadMinutes: Int { UserDefaults.standard.integer(forKey: Self.leadKey) }
+    override init() {
+        let data = UserDefaults.standard.data(forKey: Self.key)
+        reminders = data.flatMap { try? JSONDecoder().decode([Reminder].self, from: $0) } ?? []
+        super.init()
+    }
 
     func start() {
         center.delegate = self
     }
 
-    /// Turns notifications on, asking for permission the first time. Returns false when refused.
-    func setEnabled(_ on: Bool) async -> Bool {
-        if on {
+    /// Adds a notification, asking for permission the first time.
+    func add(_ reminder: Reminder) {
+        reminders.append(reminder)
+        reminders.sort { $0.date < $1.date }
+        save()
+        Task {
             let granted = (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
-            guard granted else { return false }
-        } else {
-            center.removeAllPendingNotificationRequests()
+            if granted { reschedule(LibraryStore.shared) }
         }
-        UserDefaults.standard.set(on, forKey: Self.enabledKey)
-        scheduled = [:]
-        synced = false
-        reschedule(LibraryStore.shared)
-        return true
     }
 
-    func setLead(_ minutes: Int) {
-        UserDefaults.standard.set(minutes, forKey: Self.leadKey)
+    func remove(_ reminder: Reminder) {
+        reminders.removeAll { $0.id == reminder.id }
+        save()
         reschedule(LibraryStore.shared)
     }
 
-    /// Replaces the pending notifications with the open timed entries ahead.
+    /// Hands iOS the reminders still ahead whose entry is not done.
     func reschedule(_ store: LibraryStore, now: Date = .now) {
-        guard isEnabled else { return }
-        let lead = TimeInterval(leadMinutes * 60)
-        var wanted: [(id: String, fire: Date, content: UNMutableNotificationContent)] = []
-        for day in store.agenda(from: OrgDate(now), days: Self.horizon).days {
-            for item in day.items where !item.headline.isDone {
-                guard let time = item.time else { continue }
-                let at = item.date.date(time: time)
-                let fire = at.addingTimeInterval(-lead)
-                guard fire > now else { continue }
-                wanted.append((item.id, fire, content(for: item, at: at, in: store)))
-            }
+        // Delivered ones are done with.
+        if reminders.contains(where: { $0.date <= now }) {
+            reminders.removeAll { $0.date <= now }
+            save()
         }
-        wanted.sort { $0.fire < $1.fire }
-        wanted = Array(wanted.prefix(Self.limit))
+        let wanted = reminders
+            .filter { reminder in !(headline(for: reminder, in: store).map { $0.1.isDone } ?? false) }
+            .prefix(Self.limit)
 
         // The store refreshes every few seconds, so touch only what changed. Clearing
         // everything would also drop a notification in the instant it is due.
-        let plan = Dictionary(wanted.map { ($0.id, $0.fire) }, uniquingKeysWith: { a, _ in a })
+        let plan = Dictionary(wanted.map { ($0.id.uuidString, $0.date) }, uniquingKeysWith: { a, _ in a })
         if !synced {
-            // Requests left by an earlier run may belong to entries that no longer exist.
+            // Requests left by an earlier run may belong to reminders since removed.
             center.removeAllPendingNotificationRequests()
             scheduled = [:]
             synced = true
         }
         let stale = scheduled.filter { plan[$0.key] != $0.value && $0.value > now }.map(\.key)
-        let added = wanted.filter { scheduled[$0.id] != $0.fire }
+        let added = wanted.filter { scheduled[$0.id.uuidString] != $0.date }
         scheduled = plan
         guard !stale.isEmpty || !added.isEmpty else { return }
         center.removePendingNotificationRequests(withIdentifiers: stale)
-        for entry in added {
-            let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: entry.fire)
+        for reminder in added {
+            let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: reminder.date)
             let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
-            center.add(UNNotificationRequest(identifier: entry.id, content: entry.content, trigger: trigger))
+            center.add(UNNotificationRequest(identifier: reminder.id.uuidString,
+                                             content: content(for: reminder, in: store), trigger: trigger))
         }
     }
 
-    private func content(for item: AgendaItem, at date: Date, in store: LibraryStore) -> UNMutableNotificationContent {
-        let content = UNMutableNotificationContent()
-        let title = item.headline.displayTitle
-        content.title = title.isEmpty ? "無題" : title
-        let kind = switch item.kind {
-        case .deadline: "期限"
-        case .scheduled: "予定"
-        case .timestamp: "予定"
+    /// The entry by title: in its notebook first, then anywhere, since it may have been moved.
+    func headline(for reminder: Reminder, in store: LibraryStore) -> (String, OrgHeadline)? {
+        let files = [store.files[reminder.fileID]].compactMap { $0 } + store.sortedFiles
+        for file in files {
+            if let headline = file.document.headlines.first(where: { $0.title == reminder.title }) {
+                return (file.id, headline)
+            }
         }
-        let place = store.files[item.fileID]?.displayName ?? item.fileID
-        content.body = "\(kind) \(item.time?.string ?? "") · \(place)"
+        return nil
+    }
+
+    private func content(for reminder: Reminder, in store: LibraryStore) -> UNMutableNotificationContent {
+        let content = UNMutableNotificationContent()
+        content.title = reminder.title.isEmpty ? "無題" : reminder.title
+        let fileID = headline(for: reminder, in: store)?.0 ?? reminder.fileID
+        content.body = store.files[fileID]?.displayName ?? (fileID as NSString).deletingPathExtension
         content.sound = .default
-        content.threadIdentifier = item.fileID
-        content.userInfo = ["fileID": item.fileID, "line": item.headline.lineIndex]
+        content.threadIdentifier = fileID
+        content.userInfo = ["fileID": reminder.fileID, "title": reminder.title]
         return content
+    }
+
+    private func save() {
+        UserDefaults.standard.set(try? JSONEncoder().encode(reminders), forKey: Self.key)
     }
 }
 
@@ -112,16 +121,17 @@ extension TaskNotifications: @preconcurrency UNUserNotificationCenterDelegate {
         completionHandler([.banner, .sound, .list])
     }
 
-    /// Opens the entry the notification is about.
+    /// Opens the entry the notification is about, wherever it is now.
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         let info = response.notification.request.content.userInfo
-        if let fileID = info["fileID"] as? String {
+        if let fileID = info["fileID"] as? String, let title = info["title"] as? String {
+            let found = headline(for: Reminder(fileID: fileID, title: title, date: .now), in: LibraryStore.shared)
             var parts = URLComponents()
             parts.scheme = "orgnote"
             parts.host = "file"
-            parts.queryItems = [URLQueryItem(name: "id", value: fileID)]
-                + ((info["line"] as? Int).map { [URLQueryItem(name: "line", value: String($0))] } ?? [])
+            parts.queryItems = [URLQueryItem(name: "id", value: found?.0 ?? fileID)]
+                + (found.map { [URLQueryItem(name: "line", value: String($0.1.lineIndex))] } ?? [])
             AppRouter.shared.pendingLink = parts.url
         }
         completionHandler()

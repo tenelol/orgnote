@@ -16,6 +16,8 @@ struct CaptureView: View {
     /// on top of this one would break HIG.
     @State private var picking: (kind: PlanningKind, line: Int)?
     @State private var pickedDate = Date.now
+    /// When to notify; kept in the app, not written to the file.
+    @State private var notifyAt: Date?
     @State private var confirmingDiscard = false
     @State private var controller = EditorController()
 
@@ -42,6 +44,7 @@ struct CaptureView: View {
                         .padding(.vertical, 8)
                 } else {
                     destination
+                    notification
                 }
             }
             .animation(.snappy, value: picking?.line)
@@ -95,6 +98,41 @@ struct CaptureView: View {
         }
     }
 
+    /// A notification for this entry, set like an alert in Reminders.
+    @ViewBuilder private var notification: some View {
+        HStack(spacing: 8) {
+            if let date = notifyAt {
+                Label("通知", systemImage: "bell.fill")
+                    .foregroundStyle(.tint)
+                Spacer()
+                DatePicker("通知", selection: Binding { date } set: { notifyAt = $0 }, in: Date.now...)
+                    .labelsHidden()
+                Button("通知を外す", systemImage: "xmark.circle.fill") {
+                    withAnimation(.snappy) { notifyAt = nil }
+                }
+                .labelStyle(.iconOnly)
+                .foregroundStyle(.secondary)
+            } else {
+                Button {
+                    withAnimation(.snappy) { notifyAt = Self.nextHour() }
+                } label: {
+                    Label("通知を追加", systemImage: "bell")
+                        .foregroundStyle(Color(.secondaryLabel))
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                }
+            }
+        }
+        .font(.footnote)
+        .padding(.horizontal, 20)
+        .frame(minHeight: 44)
+    }
+
+    private static func nextHour(after now: Date = .now) -> Date {
+        let calendar = Calendar.current
+        let start = calendar.dateInterval(of: .hour, for: now)?.start ?? now
+        return calendar.date(byAdding: .hour, value: 1, to: start) ?? now
+    }
+
     private func inlineDatePicker(kind: PlanningKind, line: Int) -> some View {
         VStack(alignment: .trailing, spacing: 0) {
             DatePicker(kind == .deadline ? "期限" : "予定日", selection: $pickedDate, displayedComponents: .date)
@@ -146,9 +184,13 @@ struct CaptureView: View {
         guard !isEmpty else { return }
         let draft = text
         let target = target
+        let notifyAt = notifyAt
         dismiss()
         Task {
             let saved = await store.capture(draft, into: target)
+            if let saved, let notifyAt, let title = store.files[saved.fileID]?.document.headline(at: saved.line)?.title {
+                TaskNotifications.shared.add(Reminder(fileID: saved.fileID, title: title, date: notifyAt))
+            }
             // Confirm only once the file is written, so the haptic never claims a failed save.
             UINotificationFeedbackGenerator().notificationOccurred(saved == nil ? .error : .success)
         }
