@@ -16,14 +16,15 @@ trap 'rm -rf "$work"' EXIT
 
 log() { printf '%s %s\n' "$(date '+%F %T')" "$*"; }
 
-# Prints "<epoch> <path>" for each local profile that signs this app.
+# Prints "<epoch> <path>" for each local profile that signs this app or one
+# of its extensions (the widget), whose profiles expire on their own clocks.
 app_profiles() {
   local p
   for p in "$profiles"/*.mobileprovision; do
     [ -e "$p" ] || continue
     security cms -D -i "$p" >"$work/profile.plist" 2>/dev/null || continue
     case "$(plutil -extract Entitlements.application-identifier raw "$work/profile.plist" 2>/dev/null)" in
-      *".$bundle_id") ;;
+      *".$bundle_id" | *".$bundle_id".*) ;;
       *) continue ;;
     esac
     local expires
@@ -42,8 +43,9 @@ fi
 installed=false
 grep -q "\"$bundle_id\"" "$work/apps.json" && installed=true
 
-latest="$(app_profiles | sort -n | tail -1 | cut -d' ' -f1)"
-remaining=$(( ${latest:-0} - $(date +%s) ))
+# The first profile to lapse decides; any expired piece stops the app or widget.
+earliest="$(app_profiles | sort -n | head -1 | cut -d' ' -f1)"
+remaining=$(( ${earliest:-0} - $(date +%s) ))
 if $installed && [ "$remaining" -gt $(( renew_days * 86400 )) ]; then
   log "profile valid for $(( remaining / 86400 )) more days; nothing to do"
   exit 0
@@ -80,5 +82,5 @@ fi
 
 xcrun devicectl device install app --device "$device" \
   "$state/DerivedData/Build/Products/Release-iphoneos/Orgnote.app" >/dev/null
-latest="$(app_profiles | sort -n | tail -1 | cut -d' ' -f1)"
-log "reinstalled $(git -C "$repo" rev-parse --short main); profile valid until $(date -r "$latest" '+%F %R')"
+earliest="$(app_profiles | sort -n | head -1 | cut -d' ' -f1)"
+log "reinstalled $(git -C "$repo" rev-parse --short main); profiles valid until $(date -r "$earliest" '+%F %R')"
