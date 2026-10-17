@@ -17,6 +17,7 @@ struct OrgnoteApp: App {
 
 enum Route: Hashable, Codable {
     case agenda
+    case folder(String)
     case file(String, line: Int?)
 }
 

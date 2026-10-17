@@ -74,6 +74,7 @@ extension View {
         navigationDestination(for: Route.self) { route in
             switch route {
             case .agenda: AgendaView()
+            case let .folder(path): LibraryView(folder: path)
             case let .file(id, line): DocumentView(fileID: id, focusLine: line)
             }
         }

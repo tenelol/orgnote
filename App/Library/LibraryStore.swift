@@ -67,6 +67,8 @@ final class LibraryStore {
 
     private(set) var phase: Phase = .starting
     private(set) var files: [String: OrgFile] = [:]
+    /// Relative paths of every non-hidden folder, including empty ones.
+    private(set) var folders: Set<String> = []
     private(set) var folderURL: URL?
     private(set) var isRefreshing = false
     private(set) var errors: [String: String] = [:]
@@ -215,8 +217,8 @@ final class LibraryStore {
         // Placeholders and files shown from the launch snapshot have not been read from disk yet.
         let pending = Set(files.values.filter { $0.isPlaceholder || savedText[$0.id] == nil }.map(\.id))
         let backups = FolderIO.backupDirectory()
-        let (infos, reads, failures, recovered) = await Task.detached {
-            let infos = FolderIO.list(root: root)
+        let (infos, folderList, reads, failures, recovered) = await Task.detached {
+            let (infos, folderList) = FolderIO.list(root: root)
             var reads: [FileRead] = []
             var failures: [String: String] = [:]
             var recovered = 0
@@ -229,9 +231,10 @@ final class LibraryStore {
                     failures[info.id] = error.localizedDescription
                 }
             }
-            return (infos, reads, failures, recovered)
+            return (infos, folderList, reads, failures, recovered)
         }.value
 
+        if folders != Set(folderList) { folders = Set(folderList) }
         if recovered > 0 { notice = Notice(message: "iCloudで競合した\(recovered)件の版を「設定 › バックアップ」に保存しました") }
         errors = failures
 
@@ -433,16 +436,51 @@ final class LibraryStore {
         return urls.sorted { $0.lastPathComponent > $1.lastPathComponent }
     }
 
-    func createFile(named name: String) async -> String? {
+    /// Files and folders directly inside `folder` ("" is the root).
+    func contents(of folder: String) -> (folders: [String], files: [OrgFile]) {
+        func parent(_ path: String) -> String { (path as NSString).deletingLastPathComponent }
+        // Folders implied by file paths keep the tree intact while only the launch snapshot is loaded.
+        var all = folders
+        for id in files.keys {
+            var dir = parent(id)
+            while !dir.isEmpty, all.insert(dir).inserted { dir = parent(dir) }
+        }
+        return (all.filter { parent($0) == folder }.sorted { $0.localizedStandardCompare($1) == .orderedAscending },
+                sortedFiles.filter { parent($0.id) == folder })
+    }
+
+    /// Number of files anywhere under `folder`.
+    func fileCount(under folder: String) -> Int {
+        files.keys.filter { $0.hasPrefix(folder + "/") }.count
+    }
+
+    func createFolder(named name: String, in parent: String) async -> String? {
+        await waitUntilReady()
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let root = folderURL, !name.isEmpty, !name.contains("/"), !name.hasPrefix(".") else { return nil }
+        let path = parent.isEmpty ? name : "\(parent)/\(name)"
+        let url = root.appendingPathComponent(path, isDirectory: true)
+        do {
+            try await Task.detached { try FolderIO.createFolder(at: url) }.value
+        } catch {
+            notice = Notice(message: "フォルダを作成できませんでした。（\(error.localizedDescription)）", isError: true)
+            return nil
+        }
+        folders.insert(path)
+        return path
+    }
+
+    func createFile(named name: String, in folder: String = "") async -> String? {
         await waitUntilReady()
         guard let root = folderURL else { return nil }
         var base = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        if base.isEmpty { return nil }
+        if base.isEmpty || base.contains("/") { return nil }
         if base.lowercased().hasSuffix(".org") { base = String(base.dropLast(4)) }
-        var id = "\(base).org"
+        let prefix = folder.isEmpty ? "" : "\(folder)/"
+        var id = "\(prefix)\(base).org"
         var n = 2
         while files[id] != nil || FileManager.default.fileExists(atPath: root.appendingPathComponent(id).path) {
-            id = "\(base) \(n).org"
+            id = "\(prefix)\(base) \(n).org"
             n += 1
         }
         files[id] = OrgFile(id: id, url: root.appendingPathComponent(id), modified: .now,

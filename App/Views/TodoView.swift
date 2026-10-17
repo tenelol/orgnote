@@ -120,7 +120,7 @@ struct SearchView: View {
             if query.isEmpty {
                 Section("最近のファイル") {
                     ForEach(store.sortedFiles.prefix(8)) { file in
-                        NavigationLink(value: Route.file(file.id, line: nil)) { FileRow(file: file) }
+                        NavigationLink(value: Route.file(file.id, line: nil)) { FileRow(file: file, showsFolder: true) }
                     }
                 }
             } else {

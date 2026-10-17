@@ -38,21 +38,26 @@ nonisolated enum FolderIO {
         return (url, stale)
     }
 
-    /// Lists `.org` files recursively, skipping hidden folders. iCloud placeholders
-    /// (`.name.org.icloud`) are reported under their real name and their download starts.
-    static func list(root: URL) -> [FileInfo] {
+    /// Lists `.org` files and folders recursively, skipping hidden folders. iCloud
+    /// placeholders (`.name.org.icloud`) are reported under their real name and their download starts.
+    static func list(root: URL) -> (files: [FileInfo], folders: [String]) {
         let keys: [URLResourceKey] = [.isDirectoryKey, .contentModificationDateKey, .ubiquitousItemDownloadingStatusKey]
         guard let enumerator = FileManager.default.enumerator(
             at: root, includingPropertiesForKeys: keys, options: [.skipsPackageDescendants]
-        ) else { return [] }
+        ) else { return ([], []) }
 
         let rootPath = root.standardizedFileURL.path
+        func relative(_ url: URL) -> String {
+            let path = url.standardizedFileURL.path
+            return path.hasPrefix(rootPath) ? String(path.dropFirst(rootPath.count + 1)) : url.lastPathComponent
+        }
         var result: [FileInfo] = []
+        var folders: [String] = []
         for case let url as URL in enumerator {
             let name = url.lastPathComponent
             let values = try? url.resourceValues(forKeys: Set(keys))
             if values?.isDirectory == true {
-                if name.hasPrefix(".") { enumerator.skipDescendants() }
+                if name.hasPrefix(".") { enumerator.skipDescendants() } else { folders.append(relative(url)) }
                 continue
             }
 
@@ -74,11 +79,20 @@ nonisolated enum FolderIO {
                 try? FileManager.default.startDownloadingUbiquitousItem(at: realURL)
             }
 
-            let path = realURL.standardizedFileURL.path
-            let id = path.hasPrefix(rootPath) ? String(path.dropFirst(rootPath.count + 1)) : realURL.lastPathComponent
-            result.append(FileInfo(id: id, url: realURL, modified: values?.contentModificationDate, isPlaceholder: placeholder))
+            result.append(FileInfo(id: relative(realURL), url: realURL,
+                                   modified: values?.contentModificationDate, isPlaceholder: placeholder))
         }
-        return result
+        return (result, folders)
+    }
+
+    static func createFolder(at url: URL) throws {
+        var coordinationError: NSError?
+        var result: Result<Void, Error> = .success(())
+        NSFileCoordinator(filePresenter: nil).coordinate(writingItemAt: url, options: [], error: &coordinationError) { url in
+            result = Result { try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true) }
+        }
+        if let coordinationError { throw coordinationError }
+        try result.get()
     }
 
     static func read(_ url: URL) throws -> String {
