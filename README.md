@@ -26,6 +26,10 @@ mkdir -p ~/Library/Mobile\ Documents/com~apple~CloudDocs/org
 
 既存の `~/org` の中身をそのフォルダへ移したあと、`~/org` をsymlinkに置き換える。iPhoneでは、初回起動時に「iCloud Drive › org」を選ぶ。
 
+## 実機への自動インストール
+
+無料の個人チームで署名したアプリは7日で起動しなくなる。`scripts/refresh-device.sh <UDID>` は、プロファイルの残りが3日（`ORGNOTE_RENEW_DAYS`）を切ったときだけ新しいプロファイルを取得し、`main` にコミット済みの内容をビルドしてiPhoneに入れ直す。iPhoneに届かないときは何もせずに終わる。このMacではdotfilesの `orgnote-refresh` モジュールがlaunchdで6時間ごとに実行し、ログを `~/Library/Logs/orgnote-refresh.log` に残す。
+
 ## 開発
 
 ```bash
