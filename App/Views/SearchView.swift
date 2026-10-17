@@ -30,11 +30,32 @@ struct SearchView: View {
                 browse
             } else {
                 let results = results(for: trimmed)
-                if results.isEmpty {
+                let places = places(matching: trimmed)
+                if !places.files.isEmpty || !places.folders.isEmpty {
+                    Section {
+                        ForEach(places.folders, id: \.self) { path in
+                            NavigationLink(value: Route.folder(path)) {
+                                PlaceRow(title: (path as NSString).lastPathComponent,
+                                         place: (path as NSString).deletingLastPathComponent,
+                                         symbol: "folder.fill", tint: .accentColor, query: trimmed)
+                            }
+                        }
+                        ForEach(places.files) { file in
+                            let style = styles.style(for: file.id, isCaptureTarget: file.id == store.inboxPath)
+                            NavigationLink(value: Route.notebook(file.id)) {
+                                PlaceRow(title: file.displayName, place: file.id,
+                                         symbol: style.symbol, tint: style.tint, query: trimmed)
+                            }
+                        }
+                    } header: {
+                        Text("ノート").textCase(nil)
+                    }
+                }
+                if results.isEmpty, places.files.isEmpty, places.folders.isEmpty {
                     // A row, not an overlay: an empty section has nothing to overlay.
                     ContentUnavailableView.search(text: trimmed.isEmpty ? tokens.map { "#\($0.tag)" }.joined(separator: " ") : trimmed)
                         .listRowBackground(Color.clear)
-                } else {
+                } else if !results.isEmpty {
                     Section {
                         ForEach(results) { result in
                             NavigationLink(value: Route.entry(result.fileID, line: result.headline.lineIndex)) {
@@ -50,7 +71,7 @@ struct SearchView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("検索")
-        .searchable(text: $query, tokens: $tokens, prompt: "見出し・本文・#タグ") { token in
+        .searchable(text: $query, tokens: $tokens, prompt: "ノート名・見出し・本文・#タグ") { token in
             Label(token.tag, systemImage: "number")
         }
         .onChange(of: query) { _, text in
@@ -104,7 +125,7 @@ struct SearchView: View {
         }
         if tags.isEmpty, recent.isEmpty {
             ContentUnavailableView("メモを探す", systemImage: "magnifyingglass",
-                                   description: Text("見出しや本文の言葉、#タグで探せます。"))
+                                   description: Text("ノート名、見出しや本文の言葉、#タグで探せます。"))
                 .listRowBackground(Color.clear)
         }
     }
@@ -151,6 +172,16 @@ struct SearchView: View {
         return results
     }
 
+    /// Notebooks and folders whose name or path matches; tag tokens search entries only.
+    private func places(matching query: String) -> (files: [OrgFile], folders: [String]) {
+        guard !query.isEmpty, tokens.isEmpty else { return ([], []) }
+        let files = store.sortedFiles.filter { file in
+            file.displayName.localizedStandardContains(query) || file.id.localizedStandardContains(query)
+        }
+        let folders = store.folders.sorted().filter { ($0 as NSString).lastPathComponent.localizedStandardContains(query) }
+        return (files, folders)
+    }
+
     /// A recent entry, found again by title since its line may have moved.
     private func resolve(_ recent: RecentEntries.Item) -> Result? {
         guard let document = store.files[recent.fileID]?.document else { return nil }
@@ -169,6 +200,32 @@ struct SearchView: View {
 
     private func tint(for fileID: String) -> Color {
         styles.style(for: fileID, isCaptureTarget: fileID == store.inboxPath).tint
+    }
+}
+
+/// A notebook or folder hit, styled like its cover on the shelf.
+private struct PlaceRow: View {
+    var title: String
+    var place: String
+    var symbol: String
+    var tint: Color
+    var query: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: symbol)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: 32, height: 32)
+                .background(tint.gradient, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(ResultRow.highlighted(title, query: query)).font(.headline).lineLimit(1)
+                if !place.isEmpty {
+                    Text(ResultRow.highlighted(place, query: query)).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                }
+            }
+        }
     }
 }
 
@@ -207,8 +264,10 @@ private struct ResultRow: View {
         .padding(.vertical, 2)
     }
 
+    private func highlighted(_ text: String) -> AttributedString { Self.highlighted(text, query: query) }
+
     /// Marks every match like a highlighter pen.
-    private func highlighted(_ text: String) -> AttributedString {
+    static func highlighted(_ text: String, query: String) -> AttributedString {
         var attributed = AttributedString(text)
         guard !query.isEmpty else { return attributed }
         var searchRange = text.startIndex..<text.endIndex
