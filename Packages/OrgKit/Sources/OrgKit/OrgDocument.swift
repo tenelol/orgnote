@@ -415,6 +415,83 @@ public struct OrgDocument: Sendable {
         return insertAt
     }
 
+    // MARK: Subtrees
+
+    /// The entry at `lineIndex` with everything nested under it.
+    public func subtree(at lineIndex: Int) -> [String]? {
+        guard let h = headline(at: lineIndex) else { return nil }
+        return Array(lines[lineIndex..<min(h.subtreeEndLineIndex, contentEnd)])
+    }
+
+    /// Removes the entry and its subtree, returning the removed lines.
+    @discardableResult
+    public mutating func removeSubtree(at lineIndex: Int) -> [String]? {
+        guard let removed = subtree(at: lineIndex) else { return nil }
+        lines.removeSubrange(lineIndex..<(lineIndex + removed.count))
+        if lines.isEmpty { lines = [""] }
+        reparse()
+        return removed
+    }
+
+    /// Inserts a subtree as the last child of the headline at `parentLine`, or
+    /// at the end of the file at the top level when `parentLine` is nil. Heading
+    /// levels shift so the subtree fits its new place. Returns its first line.
+    @discardableResult
+    public mutating func insertSubtree(_ subtree: [String], under parentLine: Int?) -> Int? {
+        guard let first = subtree.first, let rootLevel = Self.level(of: first) else { return nil }
+        let parent = parentLine.flatMap { headline(at: $0) }
+        let delta = (parent.map { $0.level + 1 } ?? 1) - rootLevel
+        let shifted = subtree.map { line -> String in
+            guard let level = Self.level(of: line) else { return line }
+            return String(repeating: "*", count: max(1, level + delta)) + line.dropFirst(level)
+        }
+        // Keep (or add) the file's final newline, which is the empty last element.
+        if lines.last != "" { lines.append("") }
+        let insertAt = parent.map { min($0.subtreeEndLineIndex, contentEnd) } ?? contentEnd
+        lines.insert(contentsOf: shifted, at: insertAt)
+        reparse()
+        return insertAt
+    }
+
+    /// Index just past the last line of content, before the final newline's empty element.
+    private var contentEnd: Int { lines.last == "" ? lines.count - 1 : lines.count }
+
+    /// Text of the entry's body for previews: planning, drawers, capture stamps
+    /// and list markers are left out.
+    public func preview(of headline: OrgHeadline, limit: Int = 120, includingChecklists: Bool = true) -> String {
+        var words: [String] = []
+        for line in bodyLines(of: headline) {
+            var text = line.trimmingCharacters(in: .whitespaces)
+            if text.isEmpty || text.hasPrefix("#") { continue }
+            if let stamp = OrgTimestamp.parse(text), !stamp.isActive { continue }
+            if let m = Self.listMarker.firstMatch(in: text, range: NSRange(location: 0, length: (text as NSString).length)) {
+                if !includingChecklists, (text as NSString).substring(with: m.range).contains("[") { continue }
+                text = (text as NSString).substring(from: m.range.length)
+            }
+            words.append(text)
+            if words.joined(separator: " ").count >= limit { break }
+        }
+        return String(words.joined(separator: " ").prefix(limit))
+    }
+
+    /// When the entry was captured: the first inactive timestamp alone on a body line.
+    public func created(of headline: OrgHeadline) -> OrgTimestamp? {
+        for line in bodyLines(of: headline) {
+            if let stamp = OrgTimestamp.parse(line.trimmingCharacters(in: .whitespaces)), !stamp.isActive {
+                return stamp
+            }
+        }
+        return nil
+    }
+
+    static let listMarker = try! NSRegularExpression(pattern: #"^(?:[-+]|\d+[.)])[ \t]+(?:\[[ xX\-]?\][ \t]*)?"#)
+
+    static func level(of line: String) -> Int? {
+        let ns = line as NSString
+        guard let m = headlineRegex.firstMatch(in: line, range: NSRange(location: 0, length: ns.length)) else { return nil }
+        return m.range(at: 1).length
+    }
+
     /// Replaces the whole text, keeping the newline style.
     public mutating func replaceText(_ text: String) {
         lines = text.components(separatedBy: newline)

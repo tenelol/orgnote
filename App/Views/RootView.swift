@@ -44,6 +44,11 @@ struct RootView: View {
         }
         .onAppear { router.restorePaths(from: savedPaths) }
         .onOpenURL { url in open(url) }
+        .onChange(of: router.requestedTab) { _, requested in
+            guard let requested else { return }
+            tab = requested
+            router.requestedTab = nil
+        }
         .onChange(of: router.paths) { savedPaths = router.encodedPaths() }
     }
 
@@ -91,6 +96,8 @@ extension View {
             switch route {
             case .agenda: AgendaView()
             case let .folder(path): LibraryView(folder: path)
+            case let .notebook(id): NotebookView(fileID: id)
+            case let .entry(id, line): DocumentView(fileID: id, focusLine: line, narrowed: true)
             case let .file(id, line): DocumentView(fileID: id, focusLine: line)
             }
         }

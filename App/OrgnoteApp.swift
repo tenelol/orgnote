@@ -4,12 +4,14 @@ import SwiftUI
 struct OrgnoteApp: App {
     @State private var store = LibraryStore.shared
     @State private var router = AppRouter.shared
+    @State private var styles = NotebookStyles.shared
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(store)
                 .environment(router)
+                .environment(styles)
                 .onAppear { store.start() }
         }
     }
@@ -18,6 +20,9 @@ struct OrgnoteApp: App {
 enum Route: Hashable, Codable {
     case agenda
     case folder(String)
+    case notebook(String)
+    /// One entry of a notebook, opened on its own.
+    case entry(String, line: Int)
     case file(String, line: Int?)
 }
 
@@ -27,6 +32,10 @@ enum Route: Hashable, Codable {
 final class AppRouter {
     static let shared = AppRouter()
     var showCapture = false
+    /// Set to switch tabs from inside a tab, e.g. the "today" tile.
+    var requestedTab: AppTab?
+    /// One-shot request to capture into a given file instead of the default.
+    var captureTarget: String?
     /// One-shot request to open capture with TODO already on.
     var captureStartsAsTodo = false
     var paths: [AppTab: [Route]] = [:]

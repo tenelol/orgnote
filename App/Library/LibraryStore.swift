@@ -472,6 +472,46 @@ final class LibraryStore {
         return dirty.contains(id) ? nil : (id, line)
     }
 
+    /// Deletes an entry with its subtree, keeping a copy in the app's backups.
+    func deleteEntry(_ id: String, line: Int) {
+        guard let file = files[id], let removed = file.document.subtree(at: line) else { return }
+        FolderIO.backup(removed.joined(separator: file.document.newline), name: "deleted-\(file.name)")
+        edit(id) { $0.removeSubtree(at: line) }
+    }
+
+    /// Refiles an entry with its subtree under `parent` in `target`, or at the
+    /// top level of `target` when `parent` is nil.
+    @discardableResult
+    func moveEntry(from source: String, line: Int, to target: String, under parent: Int?) -> Bool {
+        guard let sourceFile = files[source], let subtree = sourceFile.document.subtree(at: line),
+              files[target] != nil
+        else { return false }
+        let title = sourceFile.document.headline(at: line)?.displayTitle ?? ""
+        if source == target {
+            // An entry cannot move into its own subtree.
+            if let parent, parent >= line, parent < line + subtree.count { return false }
+            edit(source) { document in
+                document.removeSubtree(at: line)
+                document.insertSubtree(subtree, under: parent.map { $0 > line ? $0 - subtree.count : $0 })
+            }
+        } else {
+            // Destination first: if anything fails after this, the entry exists twice, never zero times.
+            edit(target) { $0.insertSubtree(subtree, under: parent) }
+            edit(source) { $0.removeSubtree(at: line) }
+        }
+        notice = Notice(message: "「\(title)」を\(files[target]?.displayName ?? target)に移動しました")
+        return true
+    }
+
+    /// Adds an empty top-level heading to file `id` and returns its line.
+    func addHeading(_ title: String, to id: String) -> Int? {
+        let title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard files[id] != nil, !title.isEmpty else { return nil }
+        var line: Int?
+        edit(id) { line = $0.appendEntry(title: title, created: nil) }
+        return line
+    }
+
     func backups() -> [URL] {
         let dir = FolderIO.backupDirectory()
         let urls = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []

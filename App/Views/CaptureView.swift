@@ -63,6 +63,8 @@ struct CaptureView: View {
         .onAppear {
             asTodo = defaultTodo || router.captureStartsAsTodo
             router.captureStartsAsTodo = false
+            if let requested = router.captureTarget, requested != store.inboxPath { target = requested }
+            router.captureTarget = nil
         }
     }
 

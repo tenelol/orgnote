@@ -193,6 +193,55 @@ private let today = OrgDate(year: 2026, month: 10, day: 17)
     }
 }
 
+@Suite struct SubtreeTests {
+    let text = """
+    * Inbox note
+      [2026-10-17 Sat 09:12]
+      - [ ] item
+    ** Child
+    * Second
+
+    """
+
+    @Test func extractsAndRemovesWholeSubtree() {
+        var doc = OrgDocument(text: text)
+        #expect(doc.subtree(at: 0) == ["* Inbox note", "  [2026-10-17 Sat 09:12]", "  - [ ] item", "** Child"])
+        #expect(doc.subtree(at: 4) == ["* Second"])
+        doc.removeSubtree(at: 0)
+        #expect(doc.text == "* Second\n")
+        doc.removeSubtree(at: 0)
+        #expect(doc.text == "")
+    }
+
+    @Test func insertsUnderHeadlineShiftingLevels() {
+        var target = OrgDocument(text: "#+TITLE: Notes\n* 読書\n** Old\n* 勉強\n")
+        let line = target.insertSubtree(["* Inbox note", "  body", "** Child"], under: 1)
+        #expect(line == 3)
+        #expect(target.text == "#+TITLE: Notes\n* 読書\n** Old\n** Inbox note\n  body\n*** Child\n* 勉強\n")
+    }
+
+    @Test func insertsAtTopLevelAndIntoEmptyOrUnterminatedFiles() {
+        var empty = OrgDocument(text: "")
+        #expect(empty.insertSubtree(["** Deep", "*** Deeper"], under: nil) == 0)
+        #expect(empty.text == "* Deep\n** Deeper\n")
+
+        var unterminated = OrgDocument(text: "* A")
+        unterminated.insertSubtree(["* B"], under: nil)
+        #expect(unterminated.text == "* A\n* B\n")
+
+        var last = OrgDocument(text: "* A\n* B\n")
+        last.insertSubtree(["* C"], under: 1)
+        #expect(last.text == "* A\n* B\n** C\n")
+    }
+
+    @Test func previewSkipsStampsAndMarkup() {
+        let doc = OrgDocument(text: text)
+        let h = doc.headlines[0]
+        #expect(doc.preview(of: h) == "item")
+        #expect(doc.created(of: h)?.time == OrgTime(hour: 9, minute: 12))
+    }
+}
+
 @Suite struct AgendaTests {
     @Test func buildsSections() {
         let text = """
