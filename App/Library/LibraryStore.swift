@@ -582,7 +582,12 @@ final class LibraryStore {
     // MARK: Queries
 
     func agenda(today: Date = .now) -> Agenda {
-        Agenda(documents: files.values.filter { !$0.isPlaceholder }.map { ($0.id, $0.document) }, today: OrgDate(today))
+        agenda(from: OrgDate(today), days: 7)
+    }
+
+    /// The agenda for `days` days starting at `start`; overdue is relative to `start`.
+    func agenda(from start: OrgDate, days: Int) -> Agenda {
+        Agenda(documents: files.values.filter { !$0.isPlaceholder }.map { ($0.id, $0.document) }, today: start, days: days)
     }
 
     func search(_ query: String) -> [SearchHit] {

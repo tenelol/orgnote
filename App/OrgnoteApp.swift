@@ -5,6 +5,7 @@ struct OrgnoteApp: App {
     @State private var store = LibraryStore.shared
     @State private var router = AppRouter.shared
     @State private var styles = NotebookStyles.shared
+    @State private var recents = RecentEntries.shared
 
     var body: some Scene {
         WindowGroup {
@@ -12,6 +13,7 @@ struct OrgnoteApp: App {
                 .environment(store)
                 .environment(router)
                 .environment(styles)
+                .environment(recents)
                 .onAppear { store.start() }
         }
     }

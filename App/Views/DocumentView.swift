@@ -4,6 +4,7 @@ import SwiftUI
 struct DocumentView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(AppRouter.self) private var router
+    @Environment(RecentEntries.self) private var recents
     @Environment(\.openURL) private var openURL
     /// Off shows the raw Org markup everywhere, as Neovim would.
     @AppStorage("livePreview") private var livePreview = true
@@ -130,6 +131,7 @@ struct DocumentView: View {
                 didFocus = true
                 if narrowed, let range, let title = document.headline(at: range.lowerBound)?.title {
                     narrow = Narrow(start: range.lowerBound, count: range.count, title: title, known: document.text)
+                    recents.record(fileID: fileID, line: range.lowerBound, title: title)
                 } else if let focusLine {
                     DispatchQueue.main.async { controller.scroll(toLine: focusLine) }
                 } else if file.document.text.isEmpty {
