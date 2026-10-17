@@ -266,6 +266,7 @@ final class LibraryStore {
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
             publishWidget()
+            TaskNotifications.shared.reschedule(self)
         }
     }
 

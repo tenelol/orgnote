@@ -55,6 +55,7 @@ targets:
       properties:
         CFBundleDisplayName: Orgnote
         CFBundleDevelopmentRegion: ja
+        NSCalendarsFullAccessUsageDescription: Googleカレンダーなど、iPhoneのカレンダーの予定をアジェンダに並べて表示します。予定を変更することはありません。
         # Matches the grouped list background so launch fades straight into the library.
         UILaunchScreen:
           UIColorName: LaunchBackground

@@ -6,6 +6,7 @@ import SwiftUI
 struct AgendaView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(NotebookStyles.self) private var styles
+    @Environment(CalendarEvents.self) private var events
     @State private var selected = OrgDate(.now)
     @State private var showsOverdue = true
 
@@ -20,7 +21,11 @@ struct AgendaView: View {
         let overdue = store.agenda(from: today, days: 1).overdue
         let day = byDay[selected] ?? []
         let allDay = day.filter { $0.time == nil }
-        let timed = day.filter { $0.time != nil }
+        let dayEvents = events.byDay[selected] ?? []
+        let allDayEvents = dayEvents.filter(\.isAllDay)
+        // Tasks and calendar events share one timeline, in time order.
+        let timed = (day.filter { $0.time != nil }.map(TimedEntry.task) + dayEvents.filter { !$0.isAllDay }.map(TimedEntry.event))
+            .sorted { $0.time < $1.time }
 
         List {
             if selected == today, !overdue.isEmpty {
@@ -38,8 +43,11 @@ struct AgendaView: View {
                 .listRowBackground(Color.red.opacity(0.1))
             }
 
-            if !allDay.isEmpty {
+            if !allDay.isEmpty || !allDayEvents.isEmpty {
                 Section("終日") {
+                    ForEach(allDayEvents) { event in
+                        EventRow(event: event, showsBar: true)
+                    }
                     ForEach(allDay) { item in
                         row(item, trailing: item.kind == .deadline ? "期限" : nil,
                             alert: item.kind == .deadline && !item.headline.isDone)
@@ -49,26 +57,28 @@ struct AgendaView: View {
 
             if !timed.isEmpty {
                 Section("時間") {
-                    ForEach(timed) { item in
+                    ForEach(timed) { entry in
                         HStack(alignment: .top, spacing: 10) {
-                            Text(item.time?.string ?? "")
+                            Text(entry.time.string)
                                 .font(.subheadline.monospacedDigit().weight(.semibold))
                                 .foregroundStyle(.secondary)
                                 .frame(width: 46, alignment: .trailing)
                                 .padding(.top, 12)
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(color(for: item.fileID))
-                                .frame(width: 4)
-                                .padding(.vertical, 6)
-                                .accessibilityHidden(true)
-                            row(item, trailing: nil, alert: false, showsDot: false)
+                            switch entry {
+                            case let .task(item):
+                                bar(color(for: item.fileID))
+                                row(item, trailing: nil, alert: false, showsDot: false)
+                            case let .event(event):
+                                bar(Color(event.color))
+                                EventRow(event: event, showsBar: false)
+                            }
                         }
                         .listRowInsets(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 16))
                     }
                 }
             }
 
-            if day.isEmpty, !(selected == today && !overdue.isEmpty) {
+            if day.isEmpty, dayEvents.isEmpty, !(selected == today && !overdue.isEmpty) {
                 Section {
                     ContentUnavailableView {
                         Label(selected == today ? "今日の予定はありません" : "予定はありません", systemImage: "sun.max")
@@ -85,7 +95,7 @@ struct AgendaView: View {
         // Pinned above the list, as in Calendar; inside a row, list updates would cross-fade the slide.
         .safeAreaInset(edge: .top, spacing: 0) {
             DayStrip(dates: (0...(Self.reach * 2)).map { first.adding(days: $0) },
-                     selected: $selected, today: today, items: byDay)
+                     selected: $selected, today: today, items: byDay, events: events.byDay)
                 .padding(.horizontal, 8)
                 .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
                 .padding(.horizontal, 16)
@@ -119,6 +129,14 @@ struct AgendaView: View {
         let agenda = store.agenda(from: today, days: 1)
         let tasks = (agenda.overdue + (agenda.days.first?.items ?? [])).filter { $0.headline.keyword != nil }
         return (tasks.filter(\.headline.isDone).count, tasks.count)
+    }
+
+    private func bar(_ color: Color) -> some View {
+        RoundedRectangle(cornerRadius: 2)
+            .fill(color)
+            .frame(width: 4)
+            .padding(.vertical, 6)
+            .accessibilityHidden(true)
     }
 
     private func color(for fileID: String) -> Color {
@@ -160,6 +178,7 @@ private struct DayStrip: View {
     @Binding var selected: OrgDate
     var today: OrgDate
     var items: [OrgDate: [AgendaItem]]
+    var events: [OrgDate: [CalendarEvent]]
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
@@ -206,14 +225,15 @@ private struct DayStrip: View {
                     .background {
                         if date == selected { Circle().fill(date == today ? Color.accentColor : Color.primary) }
                     }
-                Circle().fill(dot(items)).frame(width: 5, height: 5)
+                Circle().fill(dot(items, hasEvents: events[date]?.isEmpty == false)).frame(width: 5, height: 5)
             }
             .frame(maxWidth: .infinity, minHeight: 64)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(date.date().formatted(.dateTime.month().day().weekday(.wide))
-            + (items.isEmpty ? "" : "、\(items.count)件"))
+            + (items.isEmpty ? "" : "、\(items.count)件")
+            + ((events[date]?.count).map { "、予定\($0)件" } ?? ""))
         .accessibilityAddTraits(date == selected ? .isSelected : [])
     }
 
@@ -222,10 +242,75 @@ private struct DayStrip: View {
         return date == today ? .accentColor : .primary
     }
 
-    private func dot(_ items: [AgendaItem]) -> Color {
-        if items.isEmpty { return .clear }
+    private func dot(_ items: [AgendaItem], hasEvents: Bool) -> Color {
+        // Calendar events alone get a quiet dot; tasks keep the colored ones.
+        if items.isEmpty { return hasEvents ? Color(.systemGray3) : .clear }
         if items.contains(where: { $0.kind == .deadline && !$0.headline.isDone }) { return .red }
         return items.allSatisfy(\.headline.isDone) ? Color(.tertiaryLabel) : .accentColor
+    }
+}
+
+/// One row of the day's timeline.
+private enum TimedEntry: Identifiable {
+    case task(AgendaItem)
+    case event(CalendarEvent)
+
+    var id: String {
+        switch self {
+        case let .task(item): item.id
+        case let .event(event): event.id
+        }
+    }
+
+    var time: OrgTime {
+        switch self {
+        case let .task(item): item.time ?? OrgTime(hour: 0, minute: 0)
+        case let .event(event): event.time ?? OrgTime(hour: 0, minute: 0)
+        }
+    }
+}
+
+/// A calendar event; tapping opens that day in Calendar, where it can be edited.
+private struct EventRow: View {
+    var event: CalendarEvent
+    var showsBar: Bool
+
+    var body: some View {
+        Link(destination: URL(string: "calshow:\(Int(event.start.timeIntervalSinceReferenceDate))")!) {
+            HStack(spacing: 10) {
+                if showsBar {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Color(event.color))
+                        .frame(width: 4, height: 32)
+                        .accessibilityHidden(true)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(event.title)
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "calendar")
+                    .font(.footnote)
+                    .foregroundStyle(.tertiary)
+                    .accessibilityHidden(true)
+            }
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
+        // Plain, so the title keeps the label color instead of the link tint.
+        .buttonStyle(.plain)
+        .accessibilityHint("カレンダーで開きます")
+    }
+
+    private var subtitle: String {
+        guard !event.isAllDay else { return event.calendar }
+        let range = "\(OrgTime(event.start).string)–\(OrgTime(event.end).string)"
+        return "\(range) · \(event.calendar)"
     }
 }
 

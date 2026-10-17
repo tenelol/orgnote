@@ -6,6 +6,12 @@ struct OrgnoteApp: App {
     @State private var router = AppRouter.shared
     @State private var styles = NotebookStyles.shared
     @State private var recents = RecentEntries.shared
+    @State private var events = CalendarEvents.shared
+
+    init() {
+        // Set before launch finishes so a tapped notification reaches the delegate.
+        TaskNotifications.shared.start()
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -14,6 +20,7 @@ struct OrgnoteApp: App {
                 .environment(router)
                 .environment(styles)
                 .environment(recents)
+                .environment(events)
                 .onAppear { store.start() }
         }
     }
@@ -42,6 +49,8 @@ final class AppRouter {
     /// One-shot request to open capture with TODO already on.
     var captureStartsAsTodo = false
     var paths: [AppTab: [Route]] = [:]
+    /// A link to open from outside a view, such as a tapped notification.
+    var pendingLink: URL?
     /// Number of editors on screen; the capture accessory steps aside while writing.
     var openEditors = 0
 

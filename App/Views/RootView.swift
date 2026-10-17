@@ -8,6 +8,7 @@ enum AppTab: String, Codable {
 struct RootView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(AppRouter.self) private var router
+    @Environment(CalendarEvents.self) private var events
     @Environment(\.scenePhase) private var scenePhase
     @SceneStorage("tab") private var tab: AppTab = .notes
     @SceneStorage("paths") private var savedPaths: Data?
@@ -44,9 +45,15 @@ struct RootView: View {
         .overlay(alignment: .top) { NoticeBanner() }
         .onChange(of: scenePhase, initial: true) { _, phase in
             store.setActive(phase == .active)
+            if phase == .active { events.reloadIfStale() }
         }
         .onAppear { router.restorePaths(from: savedPaths) }
         .onOpenURL { url in open(url) }
+        .onChange(of: router.pendingLink, initial: true) { _, link in
+            guard let link else { return }
+            open(link)
+            router.pendingLink = nil
+        }
         .onChange(of: router.requestedTab) { _, requested in
             guard let requested else { return }
             tab = requested
@@ -55,7 +62,7 @@ struct RootView: View {
         .onChange(of: router.paths) { savedPaths = router.encodedPaths() }
     }
 
-    /// Widget links: orgnote://agenda and orgnote://file?id=…&line=….
+    /// Widget and notification links: orgnote://agenda and orgnote://file?id=…&line=….
     private func open(_ url: URL) {
         guard url.scheme == "orgnote" else { return }
         tab = .agenda
