@@ -538,22 +538,47 @@ final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
     }
 }
 
-/// The bar above the keyboard with Org commands for the current line.
-private final class KeyboardBar: UIToolbar {
+/// The bar above the keyboard with Org commands for the current line. Buttons
+/// share the width equally, so the bar always fits the screen.
+private final class KeyboardBar: UIView {
     init(controller: EditorController, textView: UITextView) {
-        super.init(frame: CGRect(x: 0, y: 0, width: 320, height: 44))
-        sizeToFit()
+        super.init(frame: CGRect(x: 0, y: 0, width: 320, height: 56))
+        autoresizingMask = .flexibleHeight
 
-        func item(_ symbol: String, _ label: String, _ command: EditorCommand) -> UIBarButtonItem {
-            let item = UIBarButtonItem(image: UIImage(systemName: symbol), primaryAction: UIAction { [weak controller] _ in
-                guard let controller else { return }
-                controller.onCommand(command, controller.currentLine)
-            })
-            item.accessibilityLabel = label
-            return item
+        func button(_ label: String, symbol: String? = nil, title: String? = nil) -> UIButton {
+            var config = UIButton.Configuration.plain()
+            if let symbol {
+                config.image = UIImage(systemName: symbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: 17, weight: .semibold))
+            }
+            if let title {
+                config.attributedTitle = AttributedString(title, attributes: AttributeContainer([
+                    .font: UIFont.systemFont(ofSize: 13, weight: .heavy),
+                ]))
+            }
+            config.baseForegroundColor = .label
+            config.contentInsets = .zero
+            let button = UIButton(configuration: config)
+            button.accessibilityLabel = label
+            return button
         }
 
-        func planningMenu(_ kind: PlanningKind, _ symbol: String, _ label: String) -> UIBarButtonItem {
+        func command(_ label: String, symbol: String? = nil, title: String? = nil, _ command: EditorCommand) -> UIButton {
+            let b = button(label, symbol: symbol, title: title)
+            b.addAction(UIAction { [weak controller] _ in
+                guard let controller else { return }
+                controller.onCommand(command, controller.currentLine)
+            }, for: .primaryActionTriggered)
+            return b
+        }
+
+        func menu(_ label: String, symbol: String, _ menu: UIMenu) -> UIButton {
+            let b = button(label, symbol: symbol)
+            b.menu = menu
+            b.showsMenuAsPrimaryAction = true
+            return b
+        }
+
+        func planningMenu(_ kind: PlanningKind, _ label: String) -> UIMenu {
             func action(_ title: String, _ image: String, _ choice: PlanningChoice, destructive: Bool = false) -> UIAction {
                 UIAction(title: title, image: UIImage(systemName: image), attributes: destructive ? .destructive : []) {
                     [weak controller] _ in
@@ -561,19 +586,16 @@ private final class KeyboardBar: UIToolbar {
                     controller.onCommand(.planning(kind, choice), controller.currentLine)
                 }
             }
-            let menu = UIMenu(title: label, children: [
+            return UIMenu(title: label, children: [
                 action("今日", "sun.max", .today),
                 action("明日", "sunrise", .tomorrow),
                 action("来週", "calendar.badge.clock", .nextWeek),
                 action("日付を選択…", "calendar", .pick),
                 UIMenu(options: .displayInline, children: [action("日付を外す", "xmark.circle", .clear, destructive: true)]),
             ])
-            let item = UIBarButtonItem(image: UIImage(systemName: symbol), menu: menu)
-            item.accessibilityLabel = label
-            return item
         }
 
-        let priority = UIBarButtonItem(image: UIImage(systemName: "exclamationmark"), menu: UIMenu(title: "優先度", children:
+        let priority = UIMenu(title: "優先度", children:
             [("A", "高"), ("B", "中"), ("C", "低")].map { value, title in
                 UIAction(title: "\(title)  [#\(value)]") { [weak controller] _ in
                     guard let controller else { return }
@@ -582,25 +604,52 @@ private final class KeyboardBar: UIToolbar {
             } + [UIAction(title: "なし", attributes: .destructive) { [weak controller] _ in
                 guard let controller else { return }
                 controller.onCommand(.priority(nil), controller.currentLine)
-            }]))
-        priority.accessibilityLabel = "優先度"
+            }])
 
-        let done = UIBarButtonItem(image: UIImage(systemName: "keyboard.chevron.compact.down"), primaryAction: UIAction {
-            [weak textView] _ in textView?.resignFirstResponder()
-        })
-        done.accessibilityLabel = "キーボードを閉じる"
+        let stack = UIStackView(arrangedSubviews: [
+            command("見出し", symbol: "asterisk", .heading),
+            command("TODOと完了を切り替え", title: "TODO", .cycleTodo),
+            command("チェックボックス", symbol: "checklist", .checkbox),
+            menu("予定日", symbol: "calendar", planningMenu(.scheduled, "予定日")),
+            menu("期限", symbol: "flag", planningMenu(.deadline, "期限")),
+            menu("優先度", symbol: "exclamationmark", priority),
+        ])
+        stack.distribution = .fillEqually
 
-        items = [
-            item("asterisk", "見出し", .heading),
-            item("checkmark.circle", "TODOを切り替え", .cycleTodo),
-            item("checklist", "チェックボックス", .checkbox),
-            planningMenu(.scheduled, "calendar", "予定日"),
-            planningMenu(.deadline, "flag", "期限"),
-            priority,
-            .flexibleSpace(),
-            done,
-        ]
+        let commands = UIVisualEffectView(effect: UIGlassEffect())
+        commands.cornerConfiguration = .capsule()
+        commands.contentView.addSubview(stack)
+
+        let dismiss = button("キーボードを閉じる", symbol: "keyboard.chevron.compact.down")
+        dismiss.addAction(UIAction { [weak textView] _ in textView?.resignFirstResponder() }, for: .primaryActionTriggered)
+        let dismissGlass = UIVisualEffectView(effect: UIGlassEffect())
+        dismissGlass.cornerConfiguration = .capsule()
+        dismissGlass.contentView.addSubview(dismiss)
+
+        for view in [commands, dismissGlass, stack, dismiss] as [UIView] { view.translatesAutoresizingMaskIntoConstraints = false }
+        addSubview(commands)
+        addSubview(dismissGlass)
+        NSLayoutConstraint.activate([
+            commands.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor, constant: 12),
+            commands.topAnchor.constraint(equalTo: topAnchor, constant: 4),
+            commands.heightAnchor.constraint(equalToConstant: 46),
+            dismissGlass.leadingAnchor.constraint(equalTo: commands.trailingAnchor, constant: 8),
+            dismissGlass.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor, constant: -12),
+            dismissGlass.centerYAnchor.constraint(equalTo: commands.centerYAnchor),
+            dismissGlass.widthAnchor.constraint(equalToConstant: 46),
+            dismissGlass.heightAnchor.constraint(equalToConstant: 46),
+            stack.leadingAnchor.constraint(equalTo: commands.contentView.leadingAnchor, constant: 6),
+            stack.trailingAnchor.constraint(equalTo: commands.contentView.trailingAnchor, constant: -6),
+            stack.topAnchor.constraint(equalTo: commands.contentView.topAnchor),
+            stack.bottomAnchor.constraint(equalTo: commands.contentView.bottomAnchor),
+            dismiss.leadingAnchor.constraint(equalTo: dismissGlass.contentView.leadingAnchor),
+            dismiss.trailingAnchor.constraint(equalTo: dismissGlass.contentView.trailingAnchor),
+            dismiss.topAnchor.constraint(equalTo: dismissGlass.contentView.topAnchor),
+            dismiss.bottomAnchor.constraint(equalTo: dismissGlass.contentView.bottomAnchor),
+        ])
     }
+
+    override var intrinsicContentSize: CGSize { CGSize(width: UIView.noIntrinsicMetric, height: 56) }
 
     required init?(coder: NSCoder) { fatalError() }
 }
