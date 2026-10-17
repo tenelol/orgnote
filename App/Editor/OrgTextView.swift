@@ -315,10 +315,23 @@ final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
         replace(range, with: replacement)
         guard isFirstResponder else { return }
         let delta = (replacement as NSString).length - range.length
-        if selection.location >= NSMaxRange(range) {
+        if selection.location > NSMaxRange(range) {
             selectedRange = NSRange(location: selection.location + delta, length: selection.length)
         } else if selection.location < range.location {
             selectedRange = selection
+        } else {
+            // Inside the change: stay on the same line, as far from its end as before.
+            // Commands rewrite a line's start (stars, keyword) and add lines below it,
+            // so following the offset would land the caret in what was added.
+            let line = old.substring(to: selection.location).components(separatedBy: "\n").count - 1
+            var end = 0
+            old.getLineStart(nil, end: nil, contentsEnd: &end, for: NSRange(location: selection.location, length: 0))
+            let fromEnd = end - selection.location
+            let lines = (text as NSString).components(separatedBy: "\n")
+            guard line < lines.count else { return }
+            let start = lines[..<line].reduce(0) { $0 + ($1 as NSString).length + 1 }
+            let length = (lines[line] as NSString).length
+            selectedRange = NSRange(location: start + max(0, length - fromEnd), length: 0)
         }
     }
 
