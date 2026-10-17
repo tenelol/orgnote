@@ -40,7 +40,6 @@ struct NotebookView: View {
             .listSectionSpacing(20)
             .tint(style.tint)
             .navigationTitle(file.displayName)
-            .refreshable { await store.refresh() }
             .overlay {
                 if groups.isEmpty {
                     ContentUnavailableView {

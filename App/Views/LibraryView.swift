@@ -52,7 +52,6 @@ struct LibraryView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle(isRoot ? "メモ" : locationName)
         .navigationSubtitle(isRoot ? store.folderName : "")
-        .refreshable { await store.refresh() }
         .overlay {
             if contents.files.isEmpty, contents.folders.isEmpty, !store.isRefreshing {
                 if isRoot {

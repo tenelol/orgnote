@@ -68,7 +68,6 @@ struct TodoView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("TODO")
-        .refreshable { await store.refresh() }
         .onDisappear { justDone = [] }
         .overlay {
             if all.isEmpty {

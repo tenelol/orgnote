@@ -80,6 +80,8 @@ struct AgendaView: View {
             }
         }
         .listStyle(.insetGrouped)
+        // A short day should sit still rather than bounce under the pinned strip.
+        .scrollBounceBehavior(.basedOnSize)
         // Pinned above the list, as in Calendar; inside a row, list updates would cross-fade the slide.
         .safeAreaInset(edge: .top, spacing: 0) {
             DayStrip(dates: (0...(Self.reach * 2)).map { first.adding(days: $0) },
@@ -101,7 +103,6 @@ struct AgendaView: View {
                 }
             }
         }
-        .refreshable { await store.refresh() }
     }
 
     private var title: String {
@@ -173,8 +174,10 @@ private struct DayStrip: View {
                 .scrollTargetLayout()
             }
             .scrollTargetBehavior(.viewAligned)
+            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
             .frame(height: 72)
-            .onAppear { proxy.scrollTo(selected, anchor: .center) }
+            // After the first layout pass; scrolling before it lands off center.
+            .task { proxy.scrollTo(selected, anchor: .center) }
             // A tapped day, or the Today button, glides to the center.
             .onChange(of: selected) { _, date in withAnimation(.snappy) { proxy.scrollTo(date, anchor: .center) } }
         }
