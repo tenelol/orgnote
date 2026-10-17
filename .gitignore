@@ -6,3 +6,5 @@ DerivedData/
 .DS_Store
 Orgnote.xcodeproj/
 App/Info.plist
+Widget/Info.plist
+*.entitlements

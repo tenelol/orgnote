@@ -41,8 +41,15 @@ targets:
     platform: iOS
     sources:
       - App
+      - Shared
     dependencies:
       - package: OrgKit
+      - target: OrgnoteWidget
+    entitlements:
+      path: App/Orgnote.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.dev.tenelol.orgnote
     info:
       path: App/Info.plist
       properties:
@@ -53,6 +60,11 @@ targets:
           UIColorName: LaunchBackground
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: true
+        # Widget taps open orgnote://agenda or orgnote://file?id=…&line=….
+        CFBundleURLTypes:
+          - CFBundleURLName: dev.tenelol.orgnote
+            CFBundleURLSchemes:
+              - orgnote
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
@@ -72,3 +84,27 @@ targets:
         SWIFT_APPROACHABLE_CONCURRENCY: YES
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 7G85M3YH8D
+  OrgnoteWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Widget
+      - Shared
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: Orgnote
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Widget/OrgnoteWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.dev.tenelol.orgnote
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.tenelol.orgnote.widget
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 7G85M3YH8D
+        SKIP_INSTALL: YES

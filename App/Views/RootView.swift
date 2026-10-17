@@ -43,7 +43,23 @@ struct RootView: View {
             store.setActive(phase == .active)
         }
         .onAppear { router.restorePaths(from: savedPaths) }
+        .onOpenURL { url in open(url) }
         .onChange(of: router.paths) { savedPaths = router.encodedPaths() }
+    }
+
+    /// Widget links: orgnote://agenda and orgnote://file?id=…&line=….
+    private func open(_ url: URL) {
+        guard url.scheme == "orgnote" else { return }
+        tab = .agenda
+        switch url.host {
+        case "file":
+            let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            guard let id = query.first(where: { $0.name == "id" })?.value, !id.isEmpty else { return }
+            let line = query.first(where: { $0.name == "line" })?.value.flatMap(Int.init)
+            router.paths[.agenda] = [.file(id, line: line)]
+        default:
+            router.paths[.agenda] = []
+        }
     }
 
     private var tabs: some View {

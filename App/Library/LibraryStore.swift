@@ -2,6 +2,7 @@ import Foundation
 import Observation
 import OrgKit
 import UIKit
+import WidgetKit
 
 struct OrgFile: Identifiable {
     var id: String
@@ -86,6 +87,8 @@ final class LibraryStore {
     @ObservationIgnored private var pollTask: Task<Void, Never>?
     @ObservationIgnored private var refreshQueued = false
     @ObservationIgnored private var readyWaiters: [CheckedContinuation<Void, Never>] = []
+    @ObservationIgnored private var widgetTask: Task<Void, Never>?
+    @ObservationIgnored private var publishedWidget: TodaySnapshot?
 
     private enum Keys {
         static let bookmark = "folderBookmark"
@@ -251,6 +254,44 @@ final class LibraryStore {
             apply(diskText: read.text, info: read.info)
         }
         if !reads.isEmpty || !present.isSuperset(of: files.keys) { saveSnapshot() }
+        scheduleWidgetUpdate()
+    }
+
+    // MARK: Widget
+
+    /// Publishes this week's tasks for the widget, coalescing bursts of edits.
+    private func scheduleWidgetUpdate() {
+        widgetTask?.cancel()
+        widgetTask = Task {
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            publishWidget()
+        }
+    }
+
+    private func publishWidget() {
+        let agenda = agenda()
+        let items = (agenda.overdue + agenda.days.flatMap(\.items))
+            .filter { $0.headline.keyword != nil }
+            .map { item in
+                TodaySnapshot.Item(
+                    id: item.id,
+                    title: item.headline.displayTitle.isEmpty ? "無題" : item.headline.displayTitle,
+                    fileID: item.fileID, line: item.headline.lineIndex,
+                    day: item.date.date(), time: item.time?.string,
+                    isDeadline: item.kind == .deadline, isDone: item.headline.isDone,
+                    priority: item.headline.priority)
+            }
+        let snapshot = TodaySnapshot(items: items)
+        // Reloading costs the widget's daily budget, so only when something changed.
+        guard snapshot != publishedWidget else { return }
+        do {
+            try snapshot.save()
+            publishedWidget = snapshot
+            WidgetCenter.shared.reloadTimelines(ofKind: TodaySnapshot.widgetKind)
+        } catch {
+            // The widget keeps its last list; the next change retries.
+        }
     }
 
     // MARK: Snapshot
@@ -336,6 +377,7 @@ final class LibraryStore {
     }
 
     private func scheduleSave(_ id: String, delay: Duration) {
+        scheduleWidgetUpdate()
         dirty.insert(id)
         saveTasks[id]?.cancel()
         saveTasks[id] = Task {
