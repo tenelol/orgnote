@@ -148,92 +148,33 @@ struct DocumentView: View {
     }
 
     private func toggle(_ toggle: OrgToggle) {
-        let base = store.files[fileID].map { offset(in: $0.document) } ?? 0
+        guard let document = store.files[fileID]?.document else { return }
+        let base = offset(in: document)
         switch toggle {
-        case let .checkbox(line):
-            store.edit(fileID) { $0.toggleCheckbox(at: base + line) }
-        case let .todo(line):
-            store.edit(fileID) { $0.toggleDone(forHeadlineAt: base + line) }
         case let .link(url):
             openURL(url)
+        case let .checkbox(line):
+            store.edit(fileID) { OrgCommands.toggle(.checkbox(line: base + line), in: &$0) }
+        case let .todo(line):
+            store.edit(fileID) { OrgCommands.toggle(.todo(line: base + line), in: &$0) }
         }
     }
 
     /// `shownLine` counts from the top of what the editor shows.
     private func perform(_ command: EditorCommand, line shownLine: Int) {
         guard let document = store.files[fileID]?.document else { return }
-        let line = offset(in: document) + shownLine
-        guard line < document.lines.count else { return }
-        let headline = document.headline(containing: line)
-
-        switch command {
-        case .heading:
-            if document.headline(at: line) != nil {
-                controller.insert("*", atLine: shownLine)
-            } else {
-                let indent = document.lines[line].prefix { $0 == " " || $0 == "\t" }
-                // Promote a plain line to a headline; leading indentation would stop Org from seeing it.
-                var newLine = document.lines[line]
-                newLine.removeFirst(indent.count)
-                store.update(fileID, text: replacingLine(line, in: document, with: "* " + newLine))
-            }
-        case .cycleTodo:
-            if let headline {
-                store.edit(fileID) { $0.cycleKeyword(forHeadlineAt: headline.lineIndex) }
-            } else {
-                store.update(fileID, text: replacingLine(line, in: document, with: "* TODO " + document.lines[line]
-                    .trimmingCharacters(in: .whitespaces)))
-            }
-        case .checkbox:
-            var copy = document
-            if copy.toggleCheckbox(at: line) {
-                store.edit(fileID) { $0.toggleCheckbox(at: line) }
-            } else {
-                let current = document.lines[line]
-                let indent = String(current.prefix { $0 == " " || $0 == "\t" })
-                var rest = String(current.dropFirst(indent.count))
-                if rest.hasPrefix("- ") || rest.hasPrefix("+ ") { rest.removeFirst(2) }
-                store.update(fileID, text: replacingLine(line, in: document, with: "\(indent)- [ ] \(rest)"))
-            }
-        case let .planning(kind, choice):
-            guard let headline else { return }
-            let today = Date.now
-            let calendar = Calendar.current
-            switch choice {
-            case .today: setPlanning(kind, OrgTimestamp(date: OrgDate(today)), line: headline.lineIndex)
-            case .tomorrow: setPlanning(kind, OrgTimestamp(date: OrgDate(today).adding(days: 1)), line: headline.lineIndex)
-            case .nextWeek:
-                let monday = calendar.nextDate(after: today, matching: DateComponents(weekday: 2), matchingPolicy: .nextTime) ?? today
-                setPlanning(kind, OrgTimestamp(date: OrgDate(monday)), line: headline.lineIndex)
-            case .pick:
-                let existing = kind == .deadline ? headline.deadline : headline.scheduled
-                pickingDate = DatePick(kind: kind, line: headline.lineIndex, date: existing?.date.date() ?? today)
-            case .clear: setPlanning(kind, nil, line: headline.lineIndex)
-            }
-        case let .priority(value):
-            guard let headline else { return }
-            store.edit(fileID) { $0.setPriority(value, forHeadlineAt: headline.lineIndex) }
+        switch OrgCommands.apply(command, at: offset(in: document) + shownLine, to: document) {
+        case let .changed(updated):
+            store.edit(fileID) { $0.replaceText(updated.text) }
+        case let .pickDate(kind, line, current):
+            pickingDate = DatePick(kind: kind, line: line, date: current)
+        case .none:
+            break
         }
     }
 
     private func setPlanning(_ kind: PlanningKind, _ timestamp: OrgTimestamp?, line: Int) {
-        store.edit(fileID) { document in
-            // Keep an existing time or repeater when only the day changes.
-            var timestamp = timestamp
-            if let current = document.headline(at: line)?.planning.first(where: { $0.kind == kind })?.timestamp,
-               let new = timestamp {
-                var merged = current
-                merged.date = new.date
-                timestamp = merged
-            }
-            document.setPlanning(kind, to: timestamp, forHeadlineAt: line)
-        }
-    }
-
-    private func replacingLine(_ index: Int, in document: OrgDocument, with line: String) -> String {
-        var lines = document.lines
-        lines[index] = line
-        return lines.joined(separator: document.newline)
+        store.edit(fileID) { OrgCommands.setPlanning(kind, timestamp?.date, at: line, in: &$0) }
     }
 }
 

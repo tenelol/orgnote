@@ -57,20 +57,6 @@ final class EditorController {
     }
 
     func focus() { textView?.beginEditing(at: nil) }
-
-    /// Inserts `text` at the start of `line` (after `offset` UTF-16 units).
-    func insert(_ text: String, atLine line: Int, offset: Int = 0) {
-        guard let textView else { return }
-        let ns = textView.text as NSString
-        var location = 0
-        for _ in 0..<line {
-            let r = ns.range(of: "\n", options: [], range: NSRange(location: location, length: ns.length - location))
-            if r.location == NSNotFound { return }
-            location = r.location + 1
-        }
-        textView.replace(NSRange(location: location + offset, length: 0), with: text)
-        textView.delegate?.textViewDidChange?(textView)
-    }
 }
 
 struct OrgTextView: UIViewRepresentable {
@@ -79,7 +65,14 @@ struct OrgTextView: UIViewRepresentable {
     var onToggle: (OrgToggle) -> Void
     var onEditingChanged: (Bool) -> Void = { _ in }
     var livePreview = true
+    /// Capture mode: start typing as soon as the view appears, show a
+    /// placeholder, and set a plain first line as the title.
+    var capture: CaptureStyle?
     let controller: EditorController
+
+    struct CaptureStyle {
+        var placeholder: String
+    }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -103,6 +96,12 @@ struct OrgTextView: UIViewRepresentable {
         view.onToggle = { toggle in context.coordinator.parent.onToggle(toggle) }
         view.onCommand = { [weak controller] command, line in controller?.onCommand(command, line) }
         view.livePreview = livePreview
+        if let capture {
+            view.autoFocus = true
+            view.emphasizesFirstLine = true
+            view.placeholder.text = capture.placeholder
+            view.textContainerInset = UIEdgeInsets(top: 8, left: 20, bottom: 16, right: 20)
+        }
         view.inputAccessoryView = KeyboardBar(controller: controller, textView: view)
         controller.textView = view
         view.highlight()
@@ -129,6 +128,7 @@ struct OrgTextView: UIViewRepresentable {
             guard let view = textView as? OrgUITextView else { return }
             // Re-attributing while the IME is composing breaks Japanese input.
             if view.markedTextRange == nil { view.highlight() }
+            view.updatePlaceholder()
             parent.onChange(view.text)
         }
 
@@ -167,6 +167,21 @@ final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
     private var overlays: [LivePreview.Overlay] = []
     private var overlayViews: [UIView] = []
     private var laidOutWidth: CGFloat = 0
+    var autoFocus = false
+    var emphasizesFirstLine = false
+    let placeholder = UILabel()
+
+    func updatePlaceholder() {
+        placeholder.isHidden = !text.isEmpty
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        guard window != nil, autoFocus else { return }
+        autoFocus = false
+        // Focusing in the same pass as the sheet's appearance raises the keyboard with it.
+        beginEditing(at: nil)
+    }
     private var toggles: [(range: NSRange, toggle: OrgToggle)] = []
     private lazy var toggleTap: UITapGestureRecognizer = {
         let tap = UITapGestureRecognizer(target: self, action: #selector(handleToggleTap(_:)))
@@ -184,6 +199,11 @@ final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
         isEditable = false
         isSelectable = false
         addGestureRecognizer(toggleTap)
+        placeholder.font = EditorTheme.headlineFont(1)
+        placeholder.textColor = .placeholderText
+        placeholder.adjustsFontForContentSizeCategory = true
+        placeholder.isUserInteractionEnabled = false
+        addSubview(placeholder)
     }
 
     func beginEditing(at point: CGPoint?) {
@@ -345,12 +365,21 @@ final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
         let tokens = OrgSyntax.tokens(in: text)
         storage.beginEditing()
         EditorTheme.apply(tokens, to: storage)
+        let document = OrgDocument(text: text)
         overlays = livePreview
-            ? LivePreview.apply(to: storage, document: OrgDocument(text: text), revealed: revealed)
+            ? LivePreview.apply(to: storage, document: document, revealed: revealed)
             : []
+        // In capture, a plain first line becomes the entry's headline, so it looks like one.
+        if emphasizesFirstLine, document.headline(at: 0) == nil, let first = document.lines.first, !first.isEmpty {
+            storage.addAttribute(.font, value: EditorTheme.headlineFont(1),
+                                 range: NSRange(location: 0, length: (first as NSString).length))
+        }
         storage.endEditing()
         selectedRange = selection
         typingAttributes = EditorTheme.baseAttributes
+        if emphasizesFirstLine, line(of: selection.location) == 0, document.headline(at: 0) == nil {
+            typingAttributes[.font] = EditorTheme.headlineFont(1)
+        }
         let ns = text as NSString
         toggles = tokens.compactMap { token in
             switch token.kind {
@@ -380,6 +409,8 @@ final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        placeholder.sizeToFit()
+        placeholder.frame.origin = CGPoint(x: textContainerInset.left, y: textContainerInset.top)
         if bounds.width != laidOutWidth { layoutOverlays() }
     }
 

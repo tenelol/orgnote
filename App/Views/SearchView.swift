@@ -20,7 +20,7 @@ struct SearchView: View {
         var headline: OrgHeadline
         /// The matching body line, when the match is not in the title.
         var snippet: String?
-        var id: String { "\(fileID)#\(headline.lineIndex)" }
+        var id: String { "\(fileID)#\(headline.identity)" }
     }
 
     var body: some View {

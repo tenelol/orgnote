@@ -1,8 +1,9 @@
 import OrgKit
 import SwiftUI
 
-/// The quick-capture sheet. The first line becomes the heading and the rest
-/// its body, like the title line of a note in Notes.
+/// The quick-capture sheet. It uses the same live-preview editor and keyboard
+/// bar as notes; the first line becomes the heading and the rest its body,
+/// like the title line of a note in Notes.
 struct CaptureView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(AppRouter.self) private var router
@@ -17,7 +18,19 @@ struct CaptureView: View {
     @State private var tagText = ""
     @State private var target: String?
     /// The date being picked inline; a second sheet on top of this one would break HIG.
-    @State private var picking: PlanningKind?
+    @State private var picking: DateTarget?
+    @State private var controller = EditorController()
+
+    /// A chip's date, or a headline inside the draft picked from the keyboard bar.
+    private enum DateTarget: Equatable {
+        case chip(PlanningKind)
+        case line(PlanningKind, Int)
+        var kind: PlanningKind {
+            switch self {
+            case let .chip(kind), let .line(kind, _): kind
+            }
+        }
+    }
     @State private var pickedDate = Date.now
     @State private var confirmingDiscard = false
 
@@ -25,19 +38,29 @@ struct CaptureView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    CaptureTextView(text: $text, placeholder: "1行目が見出しになります")
-                    options
+            VStack(spacing: 0) {
+                OrgTextView(
+                    text: text,
+                    onChange: { text = $0 },
+                    onToggle: { toggle in
+                        var document = OrgDocument(text: text)
+                        OrgCommands.toggle(toggle, in: &document)
+                        text = document.text
+                    },
+                    capture: .init(placeholder: "1行目が見出しになります"),
+                    controller: controller
+                )
+                Group {
                     if let picking {
                         inlineDatePicker(picking)
+                    } else {
+                        options
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 8)
+                .padding(.vertical, 8)
                 .animation(.snappy, value: picking)
             }
-            .scrollDismissesKeyboard(.never)
             .navigationTitle(asTodo ? "新規TODO" : "新規メモ")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -61,6 +84,7 @@ struct CaptureView: View {
         .presentationDetents([.large])
         .interactiveDismissDisabled(!isEmpty)
         .onAppear {
+            controller.onCommand = { command, line in perform(command, line: line) }
             asTodo = defaultTodo || router.captureStartsAsTodo
             router.captureStartsAsTodo = false
             if let requested = router.captureTarget, requested != store.inboxPath { target = requested }
@@ -124,15 +148,26 @@ struct CaptureView: View {
         }
     }
 
-    private func inlineDatePicker(_ kind: PlanningKind) -> some View {
+    private func inlineDatePicker(_ target: DateTarget) -> some View {
         VStack(alignment: .trailing, spacing: 0) {
-            DatePicker(kind == .deadline ? "期限" : "予定日", selection: $pickedDate, displayedComponents: .date)
+            DatePicker(target.kind == .deadline ? "期限" : "予定日", selection: $pickedDate, displayedComponents: .date)
                 .datePickerStyle(.graphical)
-            Button("完了") {
-                set(kind, OrgDate(pickedDate))
-                picking = nil
+            HStack {
+                Button("キャンセル") { picking = nil }
+                Spacer()
+                Button("完了") {
+                    switch target {
+                    case let .chip(kind):
+                        set(kind, OrgDate(pickedDate))
+                    case let .line(kind, line):
+                        var document = OrgDocument(text: text)
+                        OrgCommands.setPlanning(kind, OrgDate(pickedDate), at: line, in: &document)
+                        text = document.text
+                    }
+                    picking = nil
+                }
+                .buttonStyle(.borderedProminent)
             }
-            .buttonStyle(.borderedProminent)
         }
         .padding(12)
         .background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -145,7 +180,7 @@ struct CaptureView: View {
             Button("明日", systemImage: "sunrise") { set(kind, OrgDate(.now).adding(days: 1)) }
             Button("日付を選択…", systemImage: "calendar") {
                 pickedDate = value?.date() ?? .now
-                picking = kind
+                picking = .chip(kind)
             }
             if value != nil {
                 Button("日付を外す", systemImage: "xmark.circle", role: .destructive) { set(kind, nil) }
@@ -155,6 +190,19 @@ struct CaptureView: View {
                       tint: kind == .deadline ? .red : nil)
         }
         .accessibilityAddTraits(value != nil ? .isSelected : [])
+    }
+
+    /// Keyboard-bar commands act on the draft just as they do in the editor.
+    private func perform(_ command: EditorCommand, line: Int) {
+        switch OrgCommands.apply(command, at: line, to: OrgDocument(text: text)) {
+        case let .changed(document):
+            text = document.text
+        case let .pickDate(kind, line, current):
+            pickedDate = current
+            picking = .line(kind, line)
+        case .none:
+            break
+        }
     }
 
     private func set(_ kind: PlanningKind, _ date: OrgDate?) {
@@ -169,17 +217,13 @@ struct CaptureView: View {
             .split(whereSeparator: { $0.isWhitespace || $0 == "," || $0 == ":" })
             .map { $0.hasPrefix("#") ? String($0.dropFirst()) : String($0) }
             .filter { !$0.isEmpty }
-        var body = text
-        // The priority cookie sits between the keyword and the title, so it leads the first line.
-        if let priority { body = "[#\(priority)] " + body }
+        let draft = text
         let keyword = asTodo ? "TODO" : nil
-        let scheduled = scheduled.map { OrgTimestamp(date: $0) }
-        let deadline = deadline.map { OrgTimestamp(date: $0) }
-        let target = target
+        let (scheduled, deadline, priority, target) = (scheduled, deadline, priority, target)
         dismiss()
         Task {
-            let saved = await store.capture(body, keyword: keyword, scheduled: scheduled,
-                                            deadline: deadline, tags: tags, into: target)
+            let saved = await store.capture(draft, keyword: keyword, scheduled: scheduled, deadline: deadline,
+                                            priority: priority, tags: tags, into: target)
             // Confirm only once the file is written, so the haptic never claims a failed save.
             UINotificationFeedbackGenerator().notificationOccurred(saved == nil ? .error : .success)
         }

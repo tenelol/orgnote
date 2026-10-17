@@ -9,7 +9,7 @@ struct NotebookView: View {
     @Environment(NotebookStyles.self) private var styles
     var fileID: String
     @State private var moving: MoveRequest?
-    @State private var deleting: OrgHeadline?
+    @State private var undo: DeletedEntry?
 
     var body: some View {
         if let file = store.files[fileID] {
@@ -18,7 +18,7 @@ struct NotebookView: View {
             List {
                 ForEach(groups) { group in
                     Section {
-                        ForEach(group.entries, id: \.lineIndex) { entry in
+                        ForEach(group.entries, id: \.identity) { entry in
                             card(entry, in: file.document)
                         }
                     } header: {
@@ -71,14 +71,10 @@ struct NotebookView: View {
             .sheet(item: $moving) { request in
                 MoveSheet(request: request)
             }
-            .confirmationDialog(
-                deleting.map { "「\($0.displayTitle)」を削除しますか？" } ?? "",
-                isPresented: Binding { deleting != nil } set: { if !$0 { deleting = nil } },
-                titleVisibility: .visible, presenting: deleting
-            ) { headline in
-                Button("メモを削除", role: .destructive) { store.deleteEntry(fileID, line: headline.lineIndex) }
-            } message: { _ in
-                Text("下の階層のメモも一緒に削除されます。内容はアプリ内のバックアップに残ります。")
+            .safeAreaInset(edge: .bottom) {
+                UndoBanner(deleted: $undo) { deleted in
+                    store.restoreEntry(deleted.lines, in: fileID, at: deleted.line)
+                }
             }
         } else {
             ContentUnavailableView("ノートが見つかりません", systemImage: "book.closed",
@@ -94,7 +90,7 @@ struct NotebookView: View {
         }
         .swipeActions(edge: .trailing) {
             // Destructive stays red even though the list is tinted with the notebook color.
-            Button("削除", systemImage: "trash", role: .destructive) { deleting = entry }
+            Button("削除", systemImage: "trash", role: .destructive) { delete(entry) }
                 .tint(.red)
             Button("移動", systemImage: "folder") { moving = MoveRequest(fileID: fileID, line: entry.lineIndex) }
                 .tint(.indigo)
@@ -115,7 +111,15 @@ struct NotebookView: View {
                                                    forHeadlineAt: entry.lineIndex) }
             }
             Divider()
-            Button("削除…", systemImage: "trash", role: .destructive) { deleting = entry }
+            Button("削除", systemImage: "trash", role: .destructive) { delete(entry) }
+        }
+    }
+
+    /// Deletes at once, as Notes and Mail do, with an undo instead of a confirmation.
+    private func delete(_ entry: OrgHeadline) {
+        guard let lines = store.deleteEntry(fileID, line: entry.lineIndex) else { return }
+        withAnimation(.snappy) {
+            undo = DeletedEntry(lines: lines, line: entry.lineIndex, title: entry.displayTitle)
         }
     }
 
@@ -130,7 +134,7 @@ struct NotebookGroup: Identifiable {
     var title: String?
     var lineIndex: Int?
     var entries: [OrgHeadline]
-    var id: Int { lineIndex ?? -(entries.first?.lineIndex ?? 0) - 1 }
+    var id: String { title.map { "section:\($0)#\(lineIndex ?? 0)" } ?? "run:\(entries.first?.identity ?? "")" }
 
     /// Top-level headings that have children become sections of their direct
     /// children; childless top-level headings are cards in untitled runs.

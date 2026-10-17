@@ -448,9 +448,12 @@ final class LibraryStore {
     /// Appends a capture to the inbox file, creating it when needed.
     @discardableResult
     func capture(
-        _ text: String, keyword: String? = nil, scheduled: OrgTimestamp? = nil,
-        deadline: OrgTimestamp? = nil, tags: [String] = [], into target: String? = nil
+        _ draft: String, keyword: String? = nil, scheduled: OrgDate? = nil, deadline: OrgDate? = nil,
+        priority: String? = nil, tags: [String] = [], into target: String? = nil
     ) async -> (fileID: String, line: Int)? {
+        let entry = OrgDocument.captureEntry(draft: draft, keyword: keyword, scheduled: scheduled,
+                                             deadline: deadline, priority: priority, tags: tags)
+        guard !entry.isEmpty else { return nil }
         await waitUntilReady()
         guard let root = folderURL else { return nil }
         if files.isEmpty { await refresh() }
@@ -460,14 +463,8 @@ final class LibraryStore {
                                 document: OrgDocument(text: ""), isPlaceholder: false)
             savedText[id] = nil
         }
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let title = trimmed.components(separatedBy: .newlines).first ?? ""
-        let body = trimmed.components(separatedBy: .newlines).dropFirst().joined(separator: "\n")
         var line = 0
-        edit(id) { document in
-            line = document.appendEntry(title: title, body: body, keyword: keyword,
-                                        scheduled: scheduled, deadline: deadline, tags: tags)
-        }
+        edit(id) { line = $0.insertSubtree(entry, under: nil) ?? 0 }
         await save(id)
         return dirty.contains(id) ? nil : (id, line)
     }

@@ -9,27 +9,17 @@ struct TriageView: View {
     @State private var skipped: Set<String> = []
     @State private var moving: MoveRequest?
     @State private var drag: CGSize = .zero
-    @State private var undo: Undo?
+    @State private var undo: DeletedEntry?
     @State private var handled = 0
     @State private var pickingDate: OrgHeadline?
     @State private var date = Date.now
-
-    private struct Undo {
-        var lines: [String]
-        var line: Int
-        var title: String
-    }
 
     private var fileID: String { store.inboxPath }
 
     /// Open top-level entries of the inbox, minus the ones put off this session.
     private var queue: [OrgHeadline] {
         guard let document = store.files[fileID]?.document else { return [] }
-        return document.headlines.filter { $0.level == 1 && !$0.isDone && !skipped.contains(key($0, document)) }
-    }
-
-    private func key(_ headline: OrgHeadline, _ document: OrgDocument) -> String {
-        headline.title + "|" + (document.created(of: headline)?.string ?? "")
+        return document.headlines.filter { $0.level == 1 && !$0.isDone && !skipped.contains($0.identity) }
     }
 
     var body: some View {
@@ -58,7 +48,9 @@ struct TriageView: View {
                     Button(role: .close) { dismiss() }
                 }
             }
-            .safeAreaInset(edge: .bottom) { undoBanner }
+            .safeAreaInset(edge: .bottom) {
+                UndoBanner(deleted: $undo) { store.restoreEntry($0.lines, in: fileID, at: $0.line) }
+            }
             .sheet(item: $moving) { request in
                 MoveSheet(request: request) { handled += 1 }
             }
@@ -68,7 +60,7 @@ struct TriageView: View {
                 }
             }
             .sensoryFeedback(.success, trigger: handled)
-            .animation(.snappy, value: queue.map(\.lineIndex))
+            .animation(.snappy, value: queue.map(\.identity))
         }
     }
 
@@ -76,7 +68,7 @@ struct TriageView: View {
 
     private func stack(_ current: OrgHeadline, next: [OrgHeadline], document: OrgDocument) -> some View {
         ZStack {
-            ForEach(Array(next.enumerated()).reversed(), id: \.element.lineIndex) { depth, headline in
+            ForEach(Array(next.enumerated()).reversed(), id: \.element.identity) { depth, headline in
                 TriageCard(headline: headline, document: document)
                     .scaleEffect(1 - CGFloat(depth + 1) * 0.04)
                     .offset(y: CGFloat(depth + 1) * 14)
@@ -101,7 +93,7 @@ struct TriageView: View {
                             }
                         }
                 )
-                .id(key(current, document))
+                .id(current.identity)
                 .transition(.asymmetric(insertion: .scale(scale: 0.96).combined(with: .opacity),
                                         removal: .move(edge: .leading).combined(with: .opacity)))
                 .accessibilityAction(named: "移動") { moving = MoveRequest(fileID: fileID, line: current.lineIndex) }
@@ -157,7 +149,7 @@ struct TriageView: View {
                 delete(headline, document: document)
             }
             ActionButton(title: "あとで", symbol: "arrow.uturn.down", tint: .gray) {
-                withAnimation(.snappy) { _ = skipped.insert(key(headline, document)) }
+                withAnimation(.snappy) { _ = skipped.insert(headline.identity) }
             }
         }
     }
@@ -198,33 +190,7 @@ struct TriageView: View {
         let title = headline.displayTitle
         guard let removed = store.deleteEntry(fileID, line: headline.lineIndex) else { return }
         handled += 1
-        withAnimation(.snappy) { undo = Undo(lines: removed, line: headline.lineIndex, title: title) }
-    }
-
-    @ViewBuilder private var undoBanner: some View {
-        if let undo {
-            HStack {
-                Text("「\(undo.title)」を削除しました")
-                    .font(.footnote)
-                    .lineLimit(1)
-                Spacer()
-                Button("取り消す") {
-                    store.restoreEntry(undo.lines, in: fileID, at: undo.line)
-                    withAnimation(.snappy) { self.undo = nil }
-                }
-                .font(.footnote.weight(.semibold))
-            }
-            .padding(.horizontal, 16)
-            .frame(minHeight: 48)
-            .glassEffect(.regular, in: Capsule())
-            .padding(.horizontal, 16)
-            .padding(.bottom, 8)
-            .transition(.move(edge: .bottom).combined(with: .opacity))
-            .task(id: undo.title) {
-                try? await Task.sleep(for: .seconds(6))
-                withAnimation(.snappy) { self.undo = nil }
-            }
-        }
+        withAnimation(.snappy) { undo = DeletedEntry(lines: removed, line: headline.lineIndex, title: title) }
     }
 
     private var finished: some View {

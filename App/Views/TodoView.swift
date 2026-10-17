@@ -34,7 +34,7 @@ struct TodoView: View {
     private struct Entry: Identifiable {
         var fileID: String
         var headline: OrgHeadline
-        var id: String { "\(fileID)#\(headline.lineIndex)" }
+        var id: String { "\(fileID)#\(headline.identity)" }
     }
 
     private struct Group: Identifiable {
@@ -207,7 +207,7 @@ struct TodoView: View {
     // MARK: Data
 
     private func key(_ entry: Entry) -> String {
-        "\(entry.fileID)#\(entry.headline.title)"
+        "\(entry.fileID)#\(entry.headline.identity)"
     }
 
     private var allTasks: [Entry] {

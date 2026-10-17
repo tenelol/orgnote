@@ -13,7 +13,7 @@ public struct AgendaItem: Hashable, Sendable, Identifiable {
     public var date: OrgDate
     public var time: OrgTime?
 
-    public var id: String { "\(fileID)#\(headline.lineIndex)#\(kind)#\(date.isoString)" }
+    public var id: String { "\(fileID)#\(headline.identity)#\(kind)#\(date.isoString)" }
 }
 
 public struct AgendaDay: Hashable, Sendable, Identifiable {

@@ -47,6 +47,10 @@ public struct PlanningItem: Hashable, Sendable {
 
 public struct OrgHeadline: Hashable, Sendable, Identifiable {
     public var id: Int { lineIndex }
+    /// Survives edits elsewhere in the file: the title plus how many earlier
+    /// headlines share it. Lists use it so rows keep their identity when a
+    /// line above is added or removed.
+    public var identity: String = ""
     public var lineIndex: Int
     public var level: Int
     public var keyword: String?
@@ -174,7 +178,11 @@ public struct OrgDocument: Sendable {
         for (i, line) in lines.enumerated() {
             if let h = parseHeadline(line, at: i) { parsed.append(h) }
         }
+        var seen: [String: Int] = [:]
         for index in parsed.indices {
+            let title = parsed[index].title
+            parsed[index].identity = "\(title)#\(seen[title, default: 0])"
+            seen[title, default: 0] += 1
             let level = parsed[index].level
             parsed[index].endLineIndex = index + 1 < parsed.count ? parsed[index + 1].lineIndex : lines.count
             parsed[index].subtreeEndLineIndex =
@@ -359,6 +367,21 @@ public struct OrgDocument: Sendable {
         reparse()
     }
 
+    /// Replaces the headline's tags, keeping the rest of the line as written.
+    public mutating func setTags(_ tags: [String], forHeadlineAt lineIndex: Int) {
+        guard headline(at: lineIndex) != nil else { return }
+        let ns = lines[lineIndex] as NSString
+        var line = lines[lineIndex]
+        if let m = Self.tagsRegex.firstMatch(in: line, range: NSRange(location: 0, length: ns.length)),
+           m.range.location > 0 || Self.level(of: line) == nil {
+            line = ns.substring(to: m.range.location)
+        }
+        line = String(line.reversed().drop { $0 == " " || $0 == "\t" }.reversed())
+        if !tags.isEmpty { line += " :\(tags.joined(separator: ":")):" }
+        lines[lineIndex] = line
+        reparse()
+    }
+
     /// Toggles a `- [ ]` checkbox on `lineIndex`. Returns false when the line has none.
     @discardableResult
     public mutating func toggleCheckbox(at lineIndex: Int) -> Bool {
@@ -497,6 +520,42 @@ public struct OrgDocument: Sendable {
         let ns = line as NSString
         guard let m = headlineRegex.firstMatch(in: line, range: NSRange(location: 0, length: ns.length)) else { return nil }
         return m.range(at: 1).length
+    }
+
+    /// Turns a capture draft into an entry. A plain first line becomes the
+    /// headline and anything after it nests under it; the options are applied
+    /// to that headline, followed by a creation stamp.
+    public static func captureEntry(
+        draft: String, keyword: String? = nil, scheduled: OrgDate? = nil, deadline: OrgDate? = nil,
+        priority: String? = nil, tags: [String] = [], created: Date? = .now
+    ) -> [String] {
+        var lines = draft.components(separatedBy: .newlines)
+        while let last = lines.last, last.trimmingCharacters(in: .whitespaces).isEmpty { lines.removeLast() }
+        while let first = lines.first, first.trimmingCharacters(in: .whitespaces).isEmpty { lines.removeFirst() }
+        guard let first = lines.first else { return [] }
+
+        if level(of: first) == nil {
+            let rest = lines.dropFirst().map { line -> String in
+                if let level = level(of: line) { return "*" + String(repeating: "*", count: level - 1) + line.dropFirst(level - 1) }
+                return line.isEmpty || line.first == " " || line.first == "\t" ? line : "  " + line
+            }
+            lines = ["* " + first.trimmingCharacters(in: .whitespaces)] + rest
+        }
+
+        var document = OrgDocument(text: lines.joined(separator: "\n"))
+        guard let root = document.headline(at: 0) else { return lines }
+        if let keyword, root.keyword == nil { document.setKeyword(keyword, forHeadlineAt: 0) }
+        if let priority { document.setPriority(priority, forHeadlineAt: 0) }
+        let allTags = root.tags + tags.filter { !root.tags.contains($0) }
+        if allTags != root.tags { document.setTags(allTags, forHeadlineAt: 0) }
+        if let deadline { document.setPlanning(.deadline, to: OrgTimestamp(date: deadline), forHeadlineAt: 0) }
+        if let scheduled { document.setPlanning(.scheduled, to: OrgTimestamp(date: scheduled), forHeadlineAt: 0) }
+        if let created, let root = document.headline(at: 0) {
+            let at = (root.planningLineIndex ?? 0) + 1
+            let indent = String(repeating: " ", count: root.level + 1)
+            document.lines.insert(indent + OrgTimestamp.now(active: false, at: created).string, at: at)
+        }
+        return document.lines
     }
 
     /// Replaces the whole text, keeping the newline style.

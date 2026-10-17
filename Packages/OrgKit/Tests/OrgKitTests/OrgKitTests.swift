@@ -161,6 +161,33 @@ private let today = OrgDate(year: 2026, month: 10, day: 17)
         #expect(doc.text == "* TODO Task\n* [#A] Other\n")
     }
 
+    @Test func buildsCaptureEntries() {
+        let created = date("2026-10-17", "16:20")
+        let entry = OrgDocument.captureEntry(
+            draft: "Buy milk\n- [ ] low fat\n* Detail\n\n", keyword: "TODO",
+            scheduled: OrgDate(year: 2026, month: 10, day: 18), priority: "A", tags: ["home"], created: created)
+        #expect(entry == [
+            "* TODO [#A] Buy milk :home:",
+            "  SCHEDULED: <2026-10-18 Sun>",
+            "  [2026-10-17 Sat 16:20]",
+            "  - [ ] low fat",
+            "** Detail",
+        ])
+        // A draft that already starts with a headline keeps its own markup.
+        #expect(OrgDocument.captureEntry(draft: "** TODO Done there :x:", keyword: "TODO", created: nil)
+            == ["** TODO Done there :x:"])
+        #expect(OrgDocument.captureEntry(draft: "  \n", created: nil).isEmpty)
+    }
+
+    @Test func setsTags() {
+        var doc = OrgDocument(text: "* TODO Task :old:\n* Plain\n")
+        doc.setTags(["a", "b"], forHeadlineAt: 0)
+        doc.setTags(["x"], forHeadlineAt: 1)
+        #expect(doc.text == "* TODO Task :a:b:\n* Plain :x:\n")
+        doc.setTags([], forHeadlineAt: 0)
+        #expect(doc.text == "* TODO Task\n* Plain :x:\n")
+    }
+
     @Test func togglesCheckboxesIncludingLenientEmptyBrackets() {
         var doc = OrgDocument(text: "- [] 数学\n  - [X] 読書\n- plain\n")
         let results = [doc.toggleCheckbox(at: 0), doc.toggleCheckbox(at: 1), doc.toggleCheckbox(at: 2)]
@@ -232,6 +259,13 @@ private let today = OrgDate(year: 2026, month: 10, day: 17)
         var last = OrgDocument(text: "* A\n* B\n")
         last.insertSubtree(["* C"], under: 1)
         #expect(last.text == "* A\n* B\n** C\n")
+    }
+
+    @Test func identitySurvivesRemovalAbove() {
+        var doc = OrgDocument(text: "* A\n* B\n* A\n")
+        #expect(doc.headlines.map(\.identity) == ["A#0", "B#0", "A#1"])
+        doc.removeSubtree(at: 1)
+        #expect(doc.headlines.map(\.identity) == ["A#0", "A#1"])
     }
 
     @Test func removalCanBeUndoneInPlace() {
