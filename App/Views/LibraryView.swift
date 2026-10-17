@@ -20,7 +20,7 @@ struct LibraryView: View {
                 ContentUnavailableView {
                     Label("メモがありません", systemImage: "square.and.pencil")
                 } description: {
-                    Text("書いたメモはインボックス（\(store.inboxPath)）に入ります。")
+                    Text("書いたメモは \(store.inboxPath) に追記されます。")
                 } actions: {
                     Button("新規メモ") { router.showCapture = true }
                         .buttonStyle(.borderedProminent)
@@ -57,29 +57,18 @@ struct LibraryView: View {
     }
 
     @ViewBuilder private var overview: some View {
-        Section {
-            // Opens even before the first capture; DocumentView creates the empty inbox.
-            NavigationLink(value: Route.file(store.inboxPath, line: nil)) {
-                Label {
-                    Text("インボックス")
-                } icon: {
-                    Image(systemName: "tray").foregroundStyle(.tint)
-                }
-            }
-            .badge(store.inbox?.document.headlines.count ?? 0)
-        }
-
-        let others = store.sortedFiles.filter { $0.id != store.inboxPath }
-        if !others.isEmpty {
-            Section("ファイル") {
-                ForEach(others) { file in
+        if !store.files.isEmpty {
+            Section {
+                ForEach(store.sortedFiles) { file in
                     NavigationLink(value: Route.file(file.id, line: nil)) {
-                        FileRow(file: file)
+                        FileRow(file: file, isCaptureTarget: file.id == store.inboxPath)
                     }
                     .disabled(file.isPlaceholder)
                     .contextMenu {
                         ShareLink(item: file.url) { Label("共有…", systemImage: "square.and.arrow.up") }
-                        Button("インボックスにする", systemImage: "tray") { store.inboxPath = file.id }
+                        if file.id != store.inboxPath {
+                            Button("新規メモの保存先にする", systemImage: "tray.and.arrow.down") { store.inboxPath = file.id }
+                        }
                     }
                 }
             }
@@ -104,12 +93,21 @@ struct LibraryView: View {
 
 struct FileRow: View {
     var file: OrgFile
+    var isCaptureTarget = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(file.displayName)
-                .font(.headline)
-                .lineLimit(1)
+            HStack(spacing: 6) {
+                Text(file.displayName)
+                    .font(.headline)
+                    .lineLimit(1)
+                if isCaptureTarget {
+                    Image(systemName: "tray.and.arrow.down")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel("新規メモの保存先")
+                }
+            }
             HStack(spacing: 6) {
                 if file.isPlaceholder {
                     ProgressView().controlSize(.mini)

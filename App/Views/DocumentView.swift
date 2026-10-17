@@ -64,8 +64,6 @@ struct DocumentView: View {
                     DispatchQueue.main.async { controller.focus() }
                 }
             }
-        } else if fileID == store.inboxPath {
-            ProgressView().task { await store.ensureInbox() }
         } else {
             ContentUnavailableView("ファイルが見つかりません", systemImage: "doc.questionmark",
                                    description: Text("\(fileID) は移動または削除された可能性があります。"))

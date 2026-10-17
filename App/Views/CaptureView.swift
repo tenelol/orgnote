@@ -107,13 +107,13 @@ struct CaptureView: View {
 
             Menu {
                 Picker("保存先", selection: $target) {
-                    Text("インボックス（\(store.inboxPath)）").tag(String?.none)
+                    Text((store.inboxPath as NSString).deletingPathExtension).tag(String?.none)
                     ForEach(store.sortedFiles.filter { $0.id != store.inboxPath && !$0.isPlaceholder }) { file in
                         Text(file.displayName).tag(String?.some(file.id))
                     }
                 }
             } label: {
-                Label("保存先: \(target.flatMap { store.files[$0]?.displayName } ?? "インボックス")",
+                Label("保存先: \(target.flatMap { store.files[$0]?.displayName } ?? (store.inboxPath as NSString).deletingPathExtension)",
                       systemImage: "tray.and.arrow.down")
                     .font(.footnote)
                     .foregroundStyle(Color(.secondaryLabel))

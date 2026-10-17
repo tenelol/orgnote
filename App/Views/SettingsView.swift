@@ -18,7 +18,7 @@ struct SettingsView: View {
                 }
 
                 Section("新規メモ") {
-                    Picker("インボックス", selection: $store.inboxPath) {
+                    Picker("保存先", selection: $store.inboxPath) {
                         if store.files[store.inboxPath] == nil {
                             Text(store.inboxPath).tag(store.inboxPath)
                         }

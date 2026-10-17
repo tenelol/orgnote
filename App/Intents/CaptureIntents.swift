@@ -14,9 +14,9 @@ struct NewNoteIntent: AppIntent {
 }
 
 /// Appends text to the inbox without opening the app, for Siri and Shortcuts.
-struct AddToInboxIntent: AppIntent {
-    static let title: LocalizedStringResource = "インボックスに追加"
-    static let description = IntentDescription("テキストをOrgnoteのインボックスに追記します。")
+struct AddNoteIntent: AppIntent {
+    static let title: LocalizedStringResource = "メモを追加"
+    static let description = IntentDescription("テキストを新規メモの保存先（既定は refile.org）に追記します。")
 
     @Parameter(title: "内容")
     var text: String
@@ -45,9 +45,9 @@ struct OrgnoteShortcuts: AppShortcutsProvider {
             systemImageName: "square.and.pencil"
         )
         AppShortcut(
-            intent: AddToInboxIntent(),
+            intent: AddNoteIntent(),
             phrases: ["\(.applicationName)に追加", "Add to \(.applicationName)"],
-            shortTitle: "インボックスに追加",
+            shortTitle: "メモを追加",
             systemImageName: "tray.and.arrow.down"
         )
     }

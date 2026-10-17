@@ -27,7 +27,7 @@ struct OnboardingView: View {
 
                 VStack(alignment: .leading, spacing: 18) {
                     Feature(symbol: "square.and.pencil", title: "すぐに書ける",
-                            detail: "書いたメモはインボックスに入り、あとから整理できます。")
+                            detail: "書いたメモは refile.org に追記され、あとから整理できます。")
                     Feature(symbol: "calendar", title: "アジェンダ",
                             detail: "予定日と期限から、今日やることをまとめて表示します。")
                     Feature(symbol: "doc.plaintext", title: "ただのテキスト",

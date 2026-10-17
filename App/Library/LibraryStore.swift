@@ -427,16 +427,6 @@ final class LibraryStore {
         return dirty.contains(id) ? nil : (id, line)
     }
 
-    /// Creates an empty inbox file so it can be opened before the first capture.
-    func ensureInbox() async {
-        await waitUntilReady()
-        guard let root = folderURL, files[inboxPath] == nil else { return }
-        files[inboxPath] = OrgFile(id: inboxPath, url: root.appendingPathComponent(inboxPath), modified: .now,
-                                   document: OrgDocument(text: ""), isPlaceholder: false)
-        dirty.insert(inboxPath)
-        await save(inboxPath)
-    }
-
     func backups() -> [URL] {
         let dir = FolderIO.backupDirectory()
         let urls = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []

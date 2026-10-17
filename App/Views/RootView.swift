@@ -84,6 +84,7 @@ extension View {
 /// one thumb tap away. Collapses to a compact label when the tab bar minimizes.
 private struct CaptureAccessory: View {
     @Environment(AppRouter.self) private var router
+    @Environment(LibraryStore.self) private var store
     @Environment(\.tabViewBottomAccessoryPlacement) private var placement
 
     var body: some View {
@@ -99,7 +100,7 @@ private struct CaptureAccessory: View {
                     .font(.body.weight(.medium))
                 if placement != .inline {
                     Spacer(minLength: 8)
-                    Text("インボックス")
+                    Text((store.inboxPath as NSString).deletingPathExtension)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -109,7 +110,7 @@ private struct CaptureAccessory: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityHint("インボックスに追記します")
+        .accessibilityHint("\(store.inboxPath) に追記します")
     }
 }
 
