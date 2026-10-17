@@ -78,6 +78,7 @@ struct OrgTextView: UIViewRepresentable {
     var onChange: (String) -> Void
     var onToggle: (OrgToggle) -> Void
     var onEditingChanged: (Bool) -> Void = { _ in }
+    var livePreview = true
     let controller: EditorController
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
@@ -100,6 +101,8 @@ struct OrgTextView: UIViewRepresentable {
         view.typingAttributes = EditorTheme.baseAttributes
         view.text = text
         view.onToggle = { toggle in context.coordinator.parent.onToggle(toggle) }
+        view.onCommand = { [weak controller] command, line in controller?.onCommand(command, line) }
+        view.livePreview = livePreview
         view.inputAccessoryView = KeyboardBar(controller: controller, textView: view)
         controller.textView = view
         view.highlight()
@@ -109,6 +112,10 @@ struct OrgTextView: UIViewRepresentable {
     func updateUIView(_ view: OrgUITextView, context: Context) {
         context.coordinator.parent = self
         controller.textView = view
+        if view.livePreview != livePreview {
+            view.livePreview = livePreview
+            view.highlight()
+        }
         guard view.markedTextRange == nil, view.text != text else { return }
         view.applyExternal(text)
     }
@@ -130,7 +137,12 @@ struct OrgTextView: UIViewRepresentable {
         func textViewDidEndEditing(_ textView: UITextView) {
             textView.isEditable = false
             textView.isSelectable = false
+            (textView as? OrgUITextView)?.updateRevealedLines()
             parent.onEditingChanged(false)
+        }
+
+        func textViewDidChangeSelection(_ textView: UITextView) {
+            (textView as? OrgUITextView)?.updateRevealedLines()
         }
 
         func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
@@ -143,10 +155,18 @@ struct OrgTextView: UIViewRepresentable {
 enum OrgToggle {
     case checkbox(line: Int)
     case todo(line: Int)
+    case link(URL)
 }
 
 final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
     var onToggle: (OrgToggle) -> Void = { _ in }
+    var onCommand: (EditorCommand, Int) -> Void = { _, _ in }
+    var livePreview = true
+    /// Lines shown as raw Org because the caret is on them.
+    private var revealed: Set<Int> = []
+    private var overlays: [LivePreview.Overlay] = []
+    private var overlayViews: [UIView] = []
+    private var laidOutWidth: CGFloat = 0
     private var toggles: [(range: NSRange, toggle: OrgToggle)] = []
     private lazy var toggleTap: UITapGestureRecognizer = {
         let tap = UITapGestureRecognizer(target: self, action: #selector(handleToggleTap(_:)))
@@ -193,6 +213,8 @@ final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
 
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
         guard gestureRecognizer === toggleTap else { return true }
+        // Checkbox and chip overlays handle their own taps.
+        if touch.view is UIControl { return false }
         // While editing, plain taps belong to the text view for caret placement.
         return !isEditable || toggle(at: touch.location(in: self)) != nil
     }
@@ -208,11 +230,12 @@ final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
             return toggles.filter {
                 switch $0.toggle {
                 case let .checkbox(l), let .todo(l): l == line
+                case .link: false
                 }
             }.map { entry in
                 let name = switch entry.toggle {
                 case .checkbox: "チェックを切り替える"
-                case .todo: "完了を切り替える"
+                case .todo, .link: "完了を切り替える"
                 }
                 return UIAccessibilityCustomAction(name: name) { [weak self] _ in
                     self?.onToggle(entry.toggle)
@@ -236,7 +259,11 @@ final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
     private func toggle(at point: CGPoint) -> OrgToggle? {
         guard let position = closestPosition(to: point) else { return nil }
         let offset = self.offset(from: beginningOfDocument, to: position)
-        guard let hit = toggles.first(where: { $0.range.location - 1 <= offset && offset <= NSMaxRange($0.range) }) else {
+        guard let hit = toggles.first(where: { entry in
+            // While editing, a tap on a link should place the caret, not leave the app.
+            if case .link = entry.toggle, isEditable { return false }
+            return entry.range.location - 1 <= offset && offset <= NSMaxRange(entry.range)
+        }) else {
             return nil
         }
         // closestPosition snaps to the nearest character, so confirm the tap is on the glyphs themselves.
@@ -318,17 +345,184 @@ final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
         let tokens = OrgSyntax.tokens(in: text)
         storage.beginEditing()
         EditorTheme.apply(tokens, to: storage)
+        overlays = livePreview
+            ? LivePreview.apply(to: storage, document: OrgDocument(text: text), revealed: revealed)
+            : []
         storage.endEditing()
         selectedRange = selection
         typingAttributes = EditorTheme.baseAttributes
+        let ns = text as NSString
         toggles = tokens.compactMap { token in
             switch token.kind {
             case .checkbox: (token.range, .checkbox(line: line(of: token.range.location)))
             case .todoKeyword, .doneKeyword: (token.range, .todo(line: line(of: token.range.location)))
+            case .link:
+                LivePreview.linkTarget(around: token.range, in: ns).map { (token.range, .link($0)) }
             default: nil
             }
         }
+        layoutOverlays()
     }
+
+    /// Reveals the raw Org of the lines under the caret while editing.
+    func updateRevealedLines() {
+        guard markedTextRange == nil else { return }
+        var lines: Set<Int> = []
+        if isFirstResponder, isEditable {
+            let first = line(of: selectedRange.location)
+            let last = line(of: selectedRange.location + selectedRange.length)
+            lines = Set(first...max(first, last))
+        }
+        guard lines != revealed else { return }
+        revealed = lines
+        highlight()
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        if bounds.width != laidOutWidth { layoutOverlays() }
+    }
+
+    // MARK: Overlays
+
+    private func layoutOverlays() {
+        overlayViews.forEach { $0.removeFromSuperview() }
+        overlayViews = []
+        laidOutWidth = bounds.width
+        guard !overlays.isEmpty, let layout = textLayoutManager else { return }
+        layout.ensureLayout(for: layout.documentRange)
+        for overlay in overlays {
+            guard let frames = fragmentFrames(at: overlay.anchor, in: layout),
+                  let view = makeOverlay(overlay, frames: frames)
+            else { continue }
+            addSubview(view)
+            overlayViews.append(view)
+        }
+    }
+
+    /// The paragraph's frame and its first line's frame, in this view's coordinates.
+    private func fragmentFrames(at offset: Int, in layout: NSTextLayoutManager) -> (paragraph: CGRect, line: CGRect)? {
+        guard let location = layout.location(layout.documentRange.location, offsetBy: offset),
+              let fragment = layout.textLayoutFragment(for: location)
+        else { return nil }
+        let frame = fragment.layoutFragmentFrame.offsetBy(dx: textContainerInset.left, dy: textContainerInset.top)
+        let line = fragment.textLineFragments.first?.typographicBounds ?? CGRect(origin: .zero, size: frame.size)
+        return (frame, line.offsetBy(dx: frame.minX, dy: frame.minY))
+    }
+
+    private func makeOverlay(_ overlay: LivePreview.Overlay, frames: (paragraph: CGRect, line: CGRect)) -> UIView? {
+        let left = textContainerInset.left + overlay.indent
+        switch overlay.kind {
+        case let .todo(done), let .checkbox(done):
+            let isTask: Bool = if case .todo = overlay.kind { true } else { false }
+            let size = min(max(overlay.font.pointSize * (isTask ? 0.9 : 1.0), 17), 22)
+            let button = UIButton(type: .system)
+            button.setImage(UIImage(systemName: done ? "checkmark.circle.fill" : "circle",
+                                    withConfiguration: UIImage.SymbolConfiguration(pointSize: size, weight: .regular)),
+                            for: .normal)
+            button.tintColor = done ? .tintColor : .secondaryLabel
+            button.frame = CGRect(x: left + LivePreview.slot / 2 - 22, y: frames.line.midY - 22, width: 44, height: 44)
+            button.accessibilityLabel = done ? "完了" : "未完了"
+            button.accessibilityHint = done ? "未完了に戻します" : "完了にします"
+            let toggle: OrgToggle = isTask ? .todo(line: headlineLine(for: overlay.line)) : .checkbox(line: overlay.line)
+            button.addAction(UIAction { [weak self] _ in
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                self?.onToggle(toggle)
+            }, for: .primaryActionTriggered)
+            return button
+        case .bullet:
+            let dot = UIView(frame: CGRect(x: left + LivePreview.slot / 2 - 3, y: frames.line.midY - 3, width: 6, height: 6))
+            dot.backgroundColor = .secondaryLabel
+            dot.layer.cornerRadius = 3
+            dot.isUserInteractionEnabled = false
+            return dot
+        case let .planning(chips):
+            let stack = UIStackView(arrangedSubviews: chips.map { chipButton($0, line: overlay.line) })
+            stack.axis = .horizontal
+            stack.spacing = 6
+            let size = stack.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
+            stack.frame = CGRect(x: left, y: frames.paragraph.midY - size.height / 2, width: size.width, height: size.height)
+            return stack
+        case let .timestamp(label):
+            var config = UIButton.Configuration.plain()
+            config.image = UIImage(systemName: "clock", withConfiguration: UIImage.SymbolConfiguration(textStyle: .caption2))
+            config.imagePadding = 4
+            config.contentInsets = .zero
+            config.attributedTitle = AttributedString(label, attributes: AttributeContainer([.font: EditorTheme.small]))
+            config.baseForegroundColor = .secondaryLabel
+            let button = UIButton(configuration: config)
+            button.isUserInteractionEnabled = false
+            button.sizeToFit()
+            button.frame.origin = CGPoint(x: left, y: frames.paragraph.midY - button.bounds.height / 2)
+            return button
+        case let .inlineDate(title, length):
+            guard let start = position(from: beginningOfDocument, offset: overlay.anchor),
+                  let end = position(from: start, offset: length),
+                  let range = textRange(from: start, to: end)
+            else { return nil }
+            let rect = firstRect(for: range)
+            var config = UIButton.Configuration.gray()
+            config.cornerStyle = .capsule
+            config.image = UIImage(systemName: "calendar", withConfiguration: UIImage.SymbolConfiguration(textStyle: .caption2))
+            config.imagePadding = 3
+            config.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8)
+            config.attributedTitle = AttributedString(title, attributes: AttributeContainer([.font: EditorTheme.small]))
+            config.baseForegroundColor = .tintColor
+            let chip = UIButton(configuration: config)
+            chip.isUserInteractionEnabled = false
+            chip.sizeToFit()
+            chip.frame.origin = CGPoint(x: rect.minX, y: rect.midY - chip.bounds.height / 2)
+            return chip
+        case let .priority(marks):
+            let label = UILabel()
+            label.text = marks
+            label.font = UIFont.systemFont(ofSize: overlay.font.pointSize, weight: .heavy)
+            label.textColor = .systemRed
+            label.sizeToFit()
+            guard let start = position(from: beginningOfDocument, offset: overlay.anchor),
+                  let end = position(from: start, offset: 1),
+                  let range = textRange(from: start, to: end)
+            else { return nil }
+            let rect = firstRect(for: range)
+            label.frame.origin = CGPoint(x: rect.minX, y: frames.line.midY - label.bounds.height / 2)
+            label.accessibilityLabel = "優先度"
+            return label
+        }
+    }
+
+    private func chipButton(_ chip: LivePreview.Chip, line: Int) -> UIButton {
+        var config = UIButton.Configuration.gray()
+        config.cornerStyle = .capsule
+        config.image = UIImage(systemName: chip.symbol, withConfiguration: UIImage.SymbolConfiguration(textStyle: .caption1))
+        config.imagePadding = 4
+        config.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 10, bottom: 4, trailing: 10)
+        config.attributedTitle = AttributedString(
+            chip.title, attributes: AttributeContainer([.font: UIFont.preferredFont(forTextStyle: .footnote)]))
+        config.baseForegroundColor = chip.isAlert ? .systemRed : (chip.kind == .closed ? .secondaryLabel : .tintColor)
+        let button = UIButton(configuration: config)
+        guard chip.kind != .closed else {
+            button.isUserInteractionEnabled = false
+            return button
+        }
+        func action(_ title: String, _ image: String, _ choice: PlanningChoice, destructive: Bool = false) -> UIAction {
+            UIAction(title: title, image: UIImage(systemName: image), attributes: destructive ? .destructive : []) {
+                [weak self] _ in self?.onCommand(.planning(chip.kind, choice), line)
+            }
+        }
+        button.menu = UIMenu(title: chip.kind == .deadline ? "期限" : "予定日", children: [
+            action("今日", "sun.max", .today),
+            action("明日", "sunrise", .tomorrow),
+            action("来週", "calendar.badge.clock", .nextWeek),
+            action("日付を選択…", "calendar", .pick),
+            UIMenu(options: .displayInline, children: [action("日付を外す", "xmark.circle", .clear, destructive: true)]),
+        ])
+        button.showsMenuAsPrimaryAction = true
+        button.accessibilityHint = "日付を変更します"
+        return button
+    }
+
+    /// TODO overlays sit on the headline line itself.
+    private func headlineLine(for line: Int) -> Int { line }
 
     private func line(of location: Int) -> Int {
         let ns = text as NSString

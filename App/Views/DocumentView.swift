@@ -4,6 +4,9 @@ import SwiftUI
 struct DocumentView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(AppRouter.self) private var router
+    @Environment(\.openURL) private var openURL
+    /// Off shows the raw Org markup everywhere, as Neovim would.
+    @AppStorage("livePreview") private var livePreview = true
     var fileID: String
     var focusLine: Int?
 
@@ -27,6 +30,7 @@ struct DocumentView: View {
                 onChange: { store.update(fileID, text: $0) },
                 onToggle: toggle,
                 onEditingChanged: { isEditing = $0 },
+                livePreview: livePreview,
                 controller: controller
             )
             .ignoresSafeArea(.container, edges: .bottom)
@@ -39,6 +43,16 @@ struct DocumentView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("アウトライン", systemImage: "list.bullet.indent") { showOutline = true }
                         .disabled(file.document.headlines.isEmpty)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Toggle(isOn: Binding { !livePreview } set: { livePreview = !$0 }) {
+                            Label("Orgの記法を表示", systemImage: "chevron.left.forwardslash.chevron.right")
+                        }
+                        ShareLink(item: file.url) { Label("共有…", systemImage: "square.and.arrow.up") }
+                    } label: {
+                        Label("その他", systemImage: "ellipsis")
+                    }
                 }
             }
             .sheet(isPresented: $showOutline) {
@@ -76,6 +90,8 @@ struct DocumentView: View {
             store.edit(fileID) { $0.toggleCheckbox(at: line) }
         case let .todo(line):
             store.edit(fileID) { $0.toggleDone(forHeadlineAt: line) }
+        case let .link(url):
+            openURL(url)
         }
     }
 
