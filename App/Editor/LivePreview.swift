@@ -110,8 +110,12 @@ enum LivePreview {
                     while cursor < ns.length, ns.character(at: cursor) == 32 || ns.character(at: cursor) == 9 { cursor += 1 }
                 }
                 hide(0, min(cursor, ns.length))
-                let font = storage.attribute(.font, at: lineStart + min(cursor, max(ns.length - 1, 0)), effectiveRange: nil) as? UIFont
-                    ?? EditorTheme.headlineFont(headline.level)
+                // An empty title leaves only hidden markup, whose font is a speck.
+                let font = cursor < ns.length
+                    ? storage.attribute(.font, at: lineStart + cursor, effectiveRange: nil) as? UIFont ?? EditorTheme.headlineFont(headline.level)
+                    : EditorTheme.headlineFont(headline.level)
+                // Keep the line's height, or its button would sit on top of the one above.
+                paragraph { $0.minimumLineHeight = max($0.minimumLineHeight, font.lineHeight) }
                 if headline.keyword != nil {
                     paragraph { $0.firstLineHeadIndent = slot; $0.headIndent = slot }
                     overlays.append(Overlay(kind: .todo(done: headline.isDone), line: index,
@@ -184,8 +188,13 @@ enum LivePreview {
                 let depth = CGFloat(max(0, m.range(at: 1).length - (owner.map { $0.level + 1 } ?? 0)) / 2)
                 let indent = bodyIndent + depth * nestStep
                 hide(0, m.range.length)
-                paragraph { $0.firstLineHeadIndent = indent + slot; $0.headIndent = indent + slot }
                 let font = EditorTheme.body
+                paragraph {
+                    $0.firstLineHeadIndent = indent + slot
+                    $0.headIndent = indent + slot
+                    // An empty item is all hidden markup; without this its checkbox overlaps the one above.
+                    $0.minimumLineHeight = max($0.minimumLineHeight, font.lineHeight)
+                }
                 let anchor = lineStart + min(m.range.length, ns.length - 1)
                 if m.range(at: 4).location != NSNotFound {
                     let mark = ns.substring(with: m.range(at: 5)).lowercased()
