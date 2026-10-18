@@ -17,18 +17,15 @@ enum OrgCommands {
         let headline = document.headline(containing: line)
 
         switch command {
-        case .heading:
+        case let .heading(level):
+            // A level picked outright: cycling through them turned headings into body
+            // text by surprise, which looked like the entry had vanished.
             let current = document.lines[line]
-            if let headline = document.headline(at: line) {
-                // Cycles 1 → 2 → 3 → body text. Deeper levels look the same as
-                // level 3, so stars kept piling up on taps that seemed to do nothing.
-                let rest = current.drop { $0 == "*" }.drop { $0 == " " || $0 == "\t" }
-                replace(line, with: headline.level >= 3 ? String(rest)
-                    : String(repeating: "*", count: headline.level + 1) + " " + rest, in: &document)
-            } else {
-                // Leading indentation would stop Org from seeing a headline.
-                replace(line, with: "* " + current.drop { $0 == " " || $0 == "\t" }, in: &document)
-            }
+            var text = current[...]
+            if document.headline(at: line) != nil { text = text.drop { $0 == "*" } }
+            // Leading indentation would stop Org from seeing a headline.
+            text = text.drop { $0 == " " || $0 == "\t" }
+            replace(line, with: level.map { String(repeating: "*", count: $0) + " " + text } ?? String(text), in: &document)
         case .cycleTodo:
             if let headline {
                 document.cycleKeyword(forHeadlineAt: headline.lineIndex, now: now)

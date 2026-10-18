@@ -5,7 +5,8 @@ import UIKit
 /// Commands from the keyboard toolbar. The document view turns them into
 /// OrgDocument edits so every structural change follows the same rules.
 enum EditorCommand {
-    case heading
+    /// Makes the line a headline of this level, or body text for nil.
+    case heading(level: Int?)
     case cycleTodo
     case checkbox
     case planning(PlanningKind, PlanningChoice)
@@ -658,8 +659,27 @@ private final class KeyboardBar: UIView {
                 controller.onCommand(.priority(nil), controller.currentLine)
             }])
 
+        // Built on each open, so the line's current level carries the checkmark.
+        let heading = UIMenu(title: "見出し", children: [UIDeferredMenuElement.uncached { [weak controller, weak textView] completion in
+            let current = textView.flatMap { view in controller.map { Self.headingLevel(in: view.text, line: $0.currentLine) } } ?? nil
+            func action(_ title: String, _ level: Int?) -> UIAction {
+                let action = UIAction(title: title) { [weak controller, weak textView] _ in
+                    guard let controller else { return }
+                    // Commit any in-progress IME composition first, or the edit would be dropped.
+                    textView?.unmarkText()
+                    controller.onCommand(.heading(level: level), controller.currentLine)
+                }
+                action.state = current == level ? .on : .off
+                return action
+            }
+            completion([
+                UIMenu(options: .displayInline, children: [action("見出し 1", 1), action("見出し 2", 2), action("見出し 3", 3)]),
+                action("本文", nil),
+            ])
+        }])
+
         let stack = UIStackView(arrangedSubviews: [
-            command("見出し", symbol: "asterisk", .heading),
+            menu("見出し", symbol: "asterisk", heading),
             command("TODOと完了を切り替え", title: "TODO", .cycleTodo),
             command("チェックボックス", symbol: "checklist", .checkbox),
             menu("予定日", symbol: "calendar", planningMenu(.scheduled, "予定日")),
@@ -699,6 +719,16 @@ private final class KeyboardBar: UIView {
             dismiss.topAnchor.constraint(equalTo: dismissGlass.contentView.topAnchor),
             dismiss.bottomAnchor.constraint(equalTo: dismissGlass.contentView.bottomAnchor),
         ])
+    }
+
+    /// The headline level of `line`: its stars, when a space or the line's end follows them.
+    static func headingLevel(in text: String, line: Int) -> Int? {
+        let lines = text.components(separatedBy: "\n")
+        guard line < lines.count else { return nil }
+        let stars = lines[line].prefix { $0 == "*" }.count
+        guard stars > 0 else { return nil }
+        let next = lines[line].dropFirst(stars).first
+        return next == nil || next == " " || next == "\t" ? stars : nil
     }
 
     override var intrinsicContentSize: CGSize { CGSize(width: UIView.noIntrinsicMetric, height: 56) }
