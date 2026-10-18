@@ -173,55 +173,62 @@ struct AgendaView: View {
 
 /// A strip of days that scrolls freely with momentum and settles on a day
 /// boundary. Seven days fit the width; a dot marks days with something on.
-/// The focus rides along with the scroll like a picker wheel, and the day under
-/// it is chosen once the strip comes to rest.
+/// The focus rides along with the scroll like a picker wheel, and the list
+/// below follows it day by day.
 private struct DayStrip: View {
     var dates: [OrgDate]
     @Binding var selected: OrgDate
     var today: OrgDate
     var items: [OrgDate: [AgendaItem]]
     var events: [OrgDate: [CalendarEvent]]
-    /// The day at the center of the strip, updated while scrolling.
-    @State private var centered: OrgDate?
-
-    init(dates: [OrgDate], selected: Binding<OrgDate>, today: OrgDate,
-         items: [OrgDate: [AgendaItem]], events: [OrgDate: [CalendarEvent]]) {
-        self.dates = dates
-        _selected = selected
-        self.today = today
-        self.items = items
-        self.events = events
-        // Set before the first layout, so the strip opens centered on the day.
-        _centered = State(initialValue: selected.wrappedValue)
-    }
-
-    private var focused: OrgDate { centered ?? selected }
+    /// True while a finger moves the strip or it coasts, as opposed to a programmatic glide.
+    @State private var userScrolling = false
+    /// Index of the day under the middle of the strip.
+    @State private var middle: Int?
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            // Eager on purpose: a lazy stack here, inside the list's top inset, drew nothing.
-            HStack(spacing: 0) {
-                ForEach(dates, id: \.self) { date in
-                    day(date)
-                        .frame(width: Self.cellWidth)
-                        .id(date)
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                // Eager on purpose: a lazy stack here, inside the list's top inset, drew nothing.
+                HStack(spacing: 0) {
+                    ForEach(dates, id: \.self) { date in
+                        day(date)
+                            .frame(width: Self.cellWidth)
+                            .id(date)
+                    }
                 }
+                .scrollTargetLayout()
             }
-            .scrollTargetLayout()
+            .scrollTargetBehavior(.viewAligned)
+            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
+            .frame(height: 72)
+            // The day under the middle is the chosen one, frame by frame while the user
+            // scrolls, so the list below follows along.
+            .onScrollGeometryChange(for: Int.self) { geometry in
+                Int(((geometry.contentOffset.x + geometry.containerSize.width / 2) / Self.cellWidth).rounded(.down))
+            } action: { _, index in
+                middle = index
+                if userScrolling { choose(index) }
+            }
+            .onScrollPhaseChange { _, phase in
+                userScrolling = phase == .interacting || phase == .decelerating
+                // Where it snapped to has the final say.
+                if phase == .idle, let middle { choose(middle) }
+            }
+            // After the first layout pass; scrolling before it lands off center.
+            .task { proxy.scrollTo(selected, anchor: .center) }
+            // A tapped day, or the Today button, glides to the center.
+            .onChange(of: selected) { _, date in
+                guard !userScrolling, middle.flatMap({ dates.indices.contains($0) ? dates[$0] : nil }) != date else { return }
+                withAnimation(.snappy) { proxy.scrollTo(date, anchor: .center) }
+            }
         }
-        .scrollTargetBehavior(.viewAligned)
-        .scrollPosition(id: $centered, anchor: .center)
-        .scrollBounceBehavior(.basedOnSize, axes: .vertical)
-        .frame(height: 72)
-        // Choosing a day redraws the whole list, so wait until the strip settles.
-        .onScrollPhaseChange { _, phase in
-            if phase == .idle, let centered, centered != selected { selected = centered }
-        }
-        // A tapped day, or the Today button, glides to the center.
-        .onChange(of: selected) { _, date in
-            if centered != date { withAnimation(.snappy) { centered = date } }
-        }
-        .sensoryFeedback(.selection, trigger: focused)
+        .sensoryFeedback(.selection, trigger: selected)
+    }
+
+    private func choose(_ index: Int) {
+        guard dates.indices.contains(index), dates[index] != selected else { return }
+        selected = dates[index]
     }
 
     /// Seven days across a phone screen.
@@ -240,11 +247,11 @@ private struct DayStrip: View {
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(date.day == 1 ? Color.accentColor : Color.secondary)
                 Text("\(date.day)")
-                    .font(.body.weight(date == focused ? .bold : .regular).monospacedDigit())
+                    .font(.body.weight(date == selected ? .bold : .regular).monospacedDigit())
                     .foregroundStyle(foreground(date))
                     .frame(width: 34, height: 34)
                     .background {
-                        if date == focused { Circle().fill(date == today ? Color.accentColor : Color.primary) }
+                        if date == selected { Circle().fill(date == today ? Color.accentColor : Color.primary) }
                     }
                 Circle().fill(dot(items, hasEvents: events[date]?.isEmpty == false)).frame(width: 5, height: 5)
             }
@@ -255,11 +262,11 @@ private struct DayStrip: View {
         .accessibilityLabel(date.date().formatted(.dateTime.month().day().weekday(.wide))
             + (items.isEmpty ? "" : "、\(items.count)件")
             + ((events[date]?.count).map { "、予定\($0)件" } ?? ""))
-        .accessibilityAddTraits(date == focused ? .isSelected : [])
+        .accessibilityAddTraits(date == selected ? .isSelected : [])
     }
 
     private func foreground(_ date: OrgDate) -> Color {
-        if date == focused { return Color(.systemBackground) }
+        if date == selected { return Color(.systemBackground) }
         return date == today ? .accentColor : .primary
     }
 
