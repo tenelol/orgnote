@@ -577,6 +577,29 @@ final class LibraryStore {
         return id
     }
 
+    /// Deletes a notebook file, keeping a copy of its text in the app's backups.
+    @discardableResult
+    func deleteFile(_ id: String) async -> Bool {
+        guard let file = files[id] else { return false }
+        FolderIO.backup(file.document.text, name: "deleted-file-\(file.name)")
+        // A pending save would write the file straight back.
+        saveTasks[id]?.cancel()
+        saveTasks[id] = nil
+        dirty.remove(id)
+        files[id] = nil
+        do {
+            try await Task.detached { try FolderIO.delete(file.url) }.value
+        } catch {
+            files[id] = file
+            notice = Notice(message: "\(file.displayName) を削除できませんでした。（\(error.localizedDescription)）", isError: true)
+            return false
+        }
+        savedText[id] = nil
+        saveSnapshot()
+        scheduleWidgetUpdate()
+        return true
+    }
+
     // MARK: Queries
 
     func agenda(today: Date = .now) -> Agenda {

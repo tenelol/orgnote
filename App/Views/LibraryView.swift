@@ -13,6 +13,7 @@ struct LibraryView: View {
     @State private var newName = ""
     @State private var createdFile: String?
     @State private var editingCover: CoverTarget?
+    @State private var deleting: OrgFile?
 
     private struct CoverTarget: Identifiable {
         var id: String
@@ -105,6 +106,24 @@ struct LibraryView: View {
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
         .sheet(item: $editingCover) { target in CoverEditor(fileID: target.id) }
+        .confirmationDialog(
+            deleting.map { "「\($0.displayName)」を削除しますか？" } ?? "",
+            isPresented: Binding { deleting != nil } set: { if !$0 { deleting = nil } },
+            titleVisibility: .visible,
+            presenting: deleting
+        ) { file in
+            Button("ノートを削除", role: .destructive) {
+                Task {
+                    let deleted = await store.deleteFile(file.id)
+                    UINotificationFeedbackGenerator().notificationOccurred(deleted ? .success : .error)
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: { file in
+            let count = file.document.headlines.count
+            Text((count > 0 ? "中の見出し\(count)件も一緒に消えます。" : "")
+                + "削除前の内容は「設定 › バックアップ」に残ります。")
+        }
     }
 
     private var smartTiles: some View {
@@ -153,6 +172,11 @@ struct LibraryView: View {
             router.paths[.notes, default: []].append(.file(file.id, line: nil))
         }
         ShareLink(item: file.url) { Label("共有…", systemImage: "square.and.arrow.up") }
+        // The capture target stays: new memos would just recreate it.
+        if file.id != store.inboxPath {
+            Divider()
+            Button("ノートを削除…", systemImage: "trash", role: .destructive) { deleting = file }
+        }
     }
 
     private var unreadable: some View {

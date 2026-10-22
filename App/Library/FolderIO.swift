@@ -124,6 +124,24 @@ nonisolated enum FolderIO {
         try result.get()
     }
 
+    /// Moves the file to the Trash where the volume has one (iCloud Drive's
+    /// Recently Deleted), and deletes it outright where it does not.
+    static func delete(_ url: URL) throws {
+        var coordinationError: NSError?
+        var result: Result<Void, Error> = .success(())
+        NSFileCoordinator(filePresenter: nil).coordinate(writingItemAt: url, options: .forDeleting, error: &coordinationError) { url in
+            result = Result {
+                do {
+                    try FileManager.default.trashItem(at: url, resultingItemURL: nil)
+                } catch CocoaError.featureUnsupported {
+                    try FileManager.default.removeItem(at: url)
+                }
+            }
+        }
+        if let coordinationError { throw coordinationError }
+        try result.get()
+    }
+
     static func modificationDate(of url: URL) -> Date? {
         try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
     }
