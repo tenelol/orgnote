@@ -30,7 +30,7 @@ ORGNOTE_ICLOUD_CONTAINER = iCloud.$(ORGNOTE_BUNDLE_ID)
 
 1. **App Groups**: `group.com.yourname.orgnote`
 2. **iCloud Containers**: `iCloud.com.yourname.orgnote`
-3. **App ID**（アプリ本体）: `com.yourname.orgnote`。Capabilities で *App Groups*（上の1を割り当て）と *iCloud*（*CloudKit support* ではなく *Include CloudKit support* なしの iCloud Documents、上の2を割り当て）を有効にする。
+3. **App ID**（アプリ本体）: `com.yourname.orgnote`。Capabilities で *App Groups*（上の1を割り当て）と *iCloud*（CloudKit ではなく iCloud Documents を使う。上の2を割り当て）を有効にする。
 4. **App ID**（ウィジェット）: `com.yourname.orgnote.widget`。*App Groups* を有効にして1を割り当てる。
 
 ## 3. App Store Connect にアプリを作る

@@ -22,7 +22,7 @@ Orgnote is on its way to the App Store. Until then, build it from source (below)
 
 ## Using Orgnote with Emacs or Neovim
 
-On first launch, tap **Start** to keep notes in an *Orgnote* folder in iCloud Drive, or choose **Already have an Org-mode folder?** to pick one you sync with your computer — for example `iCloud Drive/org`, symlinked to `~/org` on your Mac:
+On first launch, tap **Get Started** to keep notes in an *Orgnote* folder in iCloud Drive, or choose **Use an Existing Org Folder** to pick one you sync with your computer — for example `iCloud Drive/org`, symlinked to `~/org` on your Mac:
 
 ```bash
 mkdir -p ~/Library/Mobile\ Documents/com~apple~CloudDocs/org
