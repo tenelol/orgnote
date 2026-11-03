@@ -130,6 +130,16 @@ final class LibraryStore {
     func start() {
         guard phase == .starting else { return }
         #if DEBUG
+        // UI tests start every run from a fresh install's state.
+        if UserDefaults.standard.bool(forKey: "OrgnoteUITestReset") {
+            for key in [Keys.storage, Keys.bookmark, Keys.inbox] { UserDefaults.standard.removeObject(forKey: key) }
+            inboxPath = "refile.org"
+            for url in (try? FileManager.default.contentsOfDirectory(at: URL.documentsDirectory, includingPropertiesForKeys: nil)) ?? [] {
+                try? FileManager.default.removeItem(at: url)
+            }
+            phase = .needsFolder
+            return
+        }
         // A plain path lets simulator tests run without the document picker.
         if let path = UserDefaults.standard.string(forKey: "OrgnoteFolderPath") {
             open(URL(fileURLWithPath: path))

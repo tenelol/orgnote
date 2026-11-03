@@ -117,6 +117,22 @@ targets:
             -c "Add $entry:NSUbiquitousContainerName string Orgnote" \
             -c "Add $entry:NSUbiquitousContainerSupportedFolderLevels string Any" \
             "$plist"
+    scheme:
+      testTargets:
+        - OrgnoteUITests
+  OrgnoteUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - UITests
+    dependencies:
+      - target: Orgnote
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(ORGNOTE_BUNDLE_ID).uitests
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Automatic
+        TARGETED_DEVICE_FAMILY: "1,2"
   OrgnoteWidget:
     type: app-extension
     platform: iOS

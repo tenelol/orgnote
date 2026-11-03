@@ -42,6 +42,7 @@ struct LibraryView: View {
                             .buttonStyle(.plain)
                             .disabled(file.isPlaceholder)
                             .contextMenu { coverMenu(file) }
+                            .accessibilityIdentifier("notebook.\(file.id)")
                         }
                     }
                 }
@@ -136,9 +137,11 @@ struct LibraryView: View {
         return HStack(spacing: 12) {
             Button { router.requestedTab = .agenda } label: {
                 SmartTile(symbol: "calendar", tint: .red, count: today, title: String(localized: "Today"))
+                    .accessibilityIdentifier("tile.today")
             }
             Button { router.showTriage = true } label: {
                 SmartTile(symbol: "tray", tint: .accentColor, count: unsorted, title: String(localized: "Unsorted"))
+                    .accessibilityIdentifier("tile.unsorted")
             }
         }
         .buttonStyle(.plain)

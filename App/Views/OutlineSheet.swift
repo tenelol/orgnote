@@ -84,6 +84,7 @@ struct HeadlineRow: View {
             // Borderless keeps the button's own hit area inside a List row
             // instead of merging it with the row's navigation tap.
             .buttonStyle(.borderless)
+            .accessibilityLabel(headline.isDone ? "Mark as Not Done" : "Mark as Done")
             .padding(.leading, -10)
         } else {
             Image(systemName: headline.level == 1 ? "number" : "chevron.right")

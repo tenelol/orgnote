@@ -62,6 +62,7 @@ struct CaptureView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add", systemImage: "checkmark", role: .confirm) { submit() }
+                        .accessibilityIdentifier("capture.add")
                         .disabled(isEmpty)
                         .keyboardShortcut(.return, modifiers: .command)
                 }

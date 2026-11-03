@@ -145,6 +145,7 @@ private struct CaptureAccessory: View {
         }
         .buttonStyle(.plain)
         .accessibilityHint("Adds the memo to \(store.inboxPath).")
+        .accessibilityIdentifier("capture.open")
     }
 }
 
