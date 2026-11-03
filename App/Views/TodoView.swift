@@ -4,6 +4,8 @@ import SwiftUI
 /// Every task across the folder, like a Reminders list: a summary, quick
 /// filters, and sections that carry each notebook's cover color.
 struct TodoView: View {
+    /// The big count grows with the text size like a large title.
+    @ScaledMetric(relativeTo: .largeTitle) private var countSize: CGFloat = 44
     @Environment(LibraryStore.self) private var store
     @Environment(AppRouter.self) private var router
     @Environment(NotebookStyles.self) private var styles
@@ -109,7 +111,7 @@ struct TodoView: View {
         let dueThisWeek = open.filter { ($0.headline.deadline?.date).map { $0 <= weekEnd } ?? false }.count
         return HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text("\(open.count)")
-                .font(.system(size: 44, weight: .bold, design: .rounded).monospacedDigit())
+                .font(.system(size: countSize, weight: .bold, design: .rounded).monospacedDigit())
                 .contentTransition(.numericText())
             VStack(alignment: .leading, spacing: 2) {
                 Text("Remaining").font(.headline)
@@ -172,8 +174,9 @@ struct TodoView: View {
                 Text(group.title).font(.headline).foregroundStyle(style.tint)
                 Spacer()
                 Text("\(group.entries.filter { !$0.headline.isDone }.count)")
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                    .font(.subheadline.weight(.semibold).monospacedDigit())
+                    // Secondary grey is too faint on the grouped header background.
+                    .foregroundStyle(.primary)
             }
             .textCase(nil)
         } else {

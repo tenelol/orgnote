@@ -73,12 +73,15 @@ struct OnboardingView: View {
 
                 Button("Use an Existing Org Folder") { picking = true }
                     .font(.footnote.weight(.semibold))
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
                     .disabled(starting)
                     .accessibilityIdentifier("onboarding.pickFolder")
             }
             .padding(.horizontal, 32)
             .padding(.vertical, 12)
-            .background(.bar)
+            // Solid, so the green link text keeps its contrast.
+            .background(Color(.systemBackground))
         }
         .task { iCloud = await LibraryStore.iCloudAvailable() }
         .fileImporter(isPresented: $picking, allowedContentTypes: [.folder]) { result in

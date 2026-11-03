@@ -181,6 +181,9 @@ private struct DayStrip: View {
     var today: OrgDate
     var items: [OrgDate: [AgendaItem]]
     var events: [OrgDate: [CalendarEvent]]
+    // Grow with the text size so larger type is not cut off.
+    @ScaledMetric(relativeTo: .body) private var stripHeight: CGFloat = 72
+    @ScaledMetric(relativeTo: .body) private var dayCircle: CGFloat = 34
     /// True while a finger moves the strip or it coasts, as opposed to a programmatic glide.
     @State private var userScrolling = false
     /// Index of the day under the middle of the strip.
@@ -201,7 +204,7 @@ private struct DayStrip: View {
             }
             .scrollTargetBehavior(.viewAligned)
             .scrollBounceBehavior(.basedOnSize, axes: .vertical)
-            .frame(height: 72)
+            .frame(height: stripHeight)
             // The day under the middle is the chosen one, frame by frame while the user
             // scrolls, so the list below follows along.
             .onScrollGeometryChange(for: Int.self) { geometry in
@@ -244,18 +247,18 @@ private struct DayStrip: View {
         } label: {
             VStack(spacing: 4) {
                 Text(date.day == 1 ? date.date().formatted(.dateTime.month(.abbreviated)) : date.date().formatted(.dateTime.weekday(.narrow)))
-                    .font(.caption2.weight(.semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(date.day == 1 ? Color.accentColor : Color.secondary)
                 Text("\(date.day)")
                     .font(.body.weight(date == selected ? .bold : .regular).monospacedDigit())
                     .foregroundStyle(foreground(date))
-                    .frame(width: 34, height: 34)
+                    .frame(width: dayCircle, height: dayCircle)
                     .background {
                         if date == selected { Circle().fill(date == today ? Color.accentColor : Color.primary) }
                     }
                 Circle().fill(dot(items, hasEvents: events[date]?.isEmpty == false)).frame(width: 5, height: 5)
             }
-            .frame(maxWidth: .infinity, minHeight: 64)
+            .frame(maxWidth: .infinity, minHeight: stripHeight - 8)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -354,6 +357,7 @@ private struct EventRow: View {
 private struct ProgressRing: View {
     var done: Int
     var total: Int
+    @ScaledMetric(relativeTo: .caption2) private var size: CGFloat = 30
 
     var body: some View {
         let fraction = total == 0 ? 0 : Double(done) / Double(total)
@@ -365,9 +369,12 @@ private struct ProgressRing: View {
                 .rotationEffect(.degrees(-90))
                 .animation(.spring(duration: 0.6), value: fraction)
             Text(total == 0 ? "–" : "\(done)/\(total)")
-                .font(.system(size: 9, weight: .semibold).monospacedDigit())
+                .font(.caption2.weight(.semibold).monospacedDigit())
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
+                .padding(4)
         }
-        .frame(width: 30, height: 30)
+        .frame(width: size, height: size)
         .accessibilityElement()
         .accessibilityLabel("\(done) of \(total) to-dos done today")
     }
