@@ -648,8 +648,8 @@ private final class KeyboardBar: UIView {
             [("A", String(localized: "High")), ("B", String(localized: "Medium")), ("C", String(localized: "Low"))].map { value, title in
                 UIAction(title: "\(title)  [#\(value)]") { [weak controller, weak textView] _ in
                     guard let controller else { return }
-                // Commit any in-progress IME composition first, or the edit would be dropped.
-                textView?.unmarkText()
+                    // Commit any in-progress IME composition first, or the edit would be dropped.
+                    textView?.unmarkText()
                     controller.onCommand(.priority(value), controller.currentLine)
                 }
             } + [UIAction(title: String(localized: "None"), attributes: .destructive) { [weak controller, weak textView] _ in
@@ -660,22 +660,25 @@ private final class KeyboardBar: UIView {
             }])
 
         // Built on each open, so the line's current level carries the checkmark.
+        // UIKit calls the provider on the main thread, though the SDK leaves it nonisolated.
         let heading = UIMenu(title: String(localized: "Heading"), children: [UIDeferredMenuElement.uncached { [weak controller, weak textView] completion in
-            let current = textView.flatMap { view in controller.map { Self.headingLevel(in: view.text, line: $0.currentLine) } } ?? nil
-            func action(_ title: LocalizedStringResource, _ level: Int?) -> UIAction {
-                let action = UIAction(title: String(localized: title)) { [weak controller, weak textView] _ in
-                    guard let controller else { return }
-                    // Commit any in-progress IME composition first, or the edit would be dropped.
-                    textView?.unmarkText()
-                    controller.onCommand(.heading(level: level), controller.currentLine)
+            MainActor.assumeIsolated {
+                let current = textView.flatMap { view in controller.map { Self.headingLevel(in: view.text, line: $0.currentLine) } } ?? nil
+                @MainActor func action(_ title: LocalizedStringResource, _ level: Int?) -> UIAction {
+                    let action = UIAction(title: String(localized: title)) { [weak controller, weak textView] _ in
+                        guard let controller else { return }
+                        // Commit any in-progress IME composition first, or the edit would be dropped.
+                        textView?.unmarkText()
+                        controller.onCommand(.heading(level: level), controller.currentLine)
+                    }
+                    action.state = current == level ? .on : .off
+                    return action
                 }
-                action.state = current == level ? .on : .off
-                return action
+                completion([
+                    UIMenu(options: .displayInline, children: [action("Heading 1", 1), action("Heading 2", 2), action("Heading 3", 3)]),
+                    action("Body Text", nil),
+                ])
             }
-            completion([
-                UIMenu(options: .displayInline, children: [action("Heading 1", 1), action("Heading 2", 2), action("Heading 3", 3)]),
-                action("Body Text", nil),
-            ])
         }])
 
         let stack = UIStackView(arrangedSubviews: [
