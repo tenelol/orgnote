@@ -274,6 +274,7 @@ struct NotebookCover: View {
                 .foregroundStyle(.secondary)
                 // Two lines, so long summaries and larger text sizes wrap instead of clipping.
                 .lineLimit(2)
+                .accessibilityIdentifier("cover.summary")
         }
         .padding(.leading, 20)
         .padding([.vertical, .trailing], 14)
