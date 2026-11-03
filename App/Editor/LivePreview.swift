@@ -274,10 +274,10 @@ enum LivePreview {
             return Chip(kind: .scheduled, title: when, symbol: "calendar",
                         isAlert: !isDone && item.timestamp.date < today)
         case .deadline:
-            return Chip(kind: .deadline, title: "期限 \(when)", symbol: "flag.fill",
+            return Chip(kind: .deadline, title: String(localized: "Due \(when)"), symbol: "flag.fill",
                         isAlert: !isDone && item.timestamp.date <= today)
         case .closed:
-            return Chip(kind: .closed, title: "完了 \(when)", symbol: "checkmark", isAlert: false)
+            return Chip(kind: .closed, title: String(localized: "Done \(when)"), symbol: "checkmark", isAlert: false)
         }
     }
 
@@ -287,10 +287,15 @@ enum LivePreview {
             text += " \(time.hour):\(String(format: "%02d", time.minute))"
         }
         if let repeater = timestamp.repeater {
-            let every = ["h": "毎時間", "d": "毎日", "w": "毎週", "m": "毎月", "y": "毎年"]
-            let unit = ["h": "時間", "d": "日", "w": "週", "m": "か月", "y": "年"]
-            let key = repeater.unit.rawValue
-            text += repeater.value == 1 ? " ・\(every[key] ?? "")" : " ・\(repeater.value)\(unit[key] ?? "")ごと"
+            let count = repeater.value
+            let every = switch repeater.unit {
+            case .hour: count == 1 ? String(localized: "Hourly") : String(localized: "Every \(count) hours")
+            case .day: count == 1 ? String(localized: "Daily") : String(localized: "Every \(count) days")
+            case .week: count == 1 ? String(localized: "Weekly") : String(localized: "Every \(count) weeks")
+            case .month: count == 1 ? String(localized: "Monthly") : String(localized: "Every \(count) months")
+            case .year: count == 1 ? String(localized: "Yearly") : String(localized: "Every \(count) years")
+            }
+            text = String(localized: "\(text) · \(every)", comment: "A date followed by how often it repeats.")
         }
         return text
     }

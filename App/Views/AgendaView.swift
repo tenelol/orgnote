@@ -35,7 +35,7 @@ struct AgendaView: View {
                             row(item, trailing: DateLabel.short(item.date), alert: true)
                         }
                     } label: {
-                        Label("期限切れ \(overdue.count)件", systemImage: "exclamationmark.circle.fill")
+                        Label("\(overdue.count) Overdue", systemImage: "exclamationmark.circle.fill")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.red)
                     }
@@ -44,19 +44,19 @@ struct AgendaView: View {
             }
 
             if !allDay.isEmpty || !allDayEvents.isEmpty {
-                Section("終日") {
+                Section("All-day") {
                     ForEach(allDayEvents) { event in
                         EventRow(event: event, showsBar: true)
                     }
                     ForEach(allDay) { item in
-                        row(item, trailing: item.kind == .deadline ? "期限" : nil,
+                        row(item, trailing: item.kind == .deadline ? String(localized: "Deadline") : nil,
                             alert: item.kind == .deadline && !item.headline.isDone)
                     }
                 }
             }
 
             if !timed.isEmpty {
-                Section("時間") {
+                Section("Timed") {
                     ForEach(timed) { entry in
                         HStack(alignment: .top, spacing: 10) {
                             Text(entry.time.string)
@@ -81,9 +81,9 @@ struct AgendaView: View {
             if day.isEmpty, dayEvents.isEmpty, !(selected == today && !overdue.isEmpty) {
                 Section {
                     ContentUnavailableView {
-                        Label(selected == today ? "今日の予定はありません" : "予定はありません", systemImage: "sun.max")
+                        Label(selected == today ? "Nothing Scheduled Today" : "Nothing Scheduled", systemImage: "sun.max")
                     } description: {
-                        Text("TODOに予定日や期限を付けると、ここに並びます。")
+                        Text("To-dos with a scheduled date or deadline appear here.")
                     }
                     .listRowBackground(Color.clear)
                 }
@@ -109,7 +109,7 @@ struct AgendaView: View {
             }
             if selected != today {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("今日") { withAnimation(.snappy) { selected = today } }
+                    Button("Today") { withAnimation(.snappy) { selected = today } }
                 }
             }
         }
@@ -117,10 +117,10 @@ struct AgendaView: View {
 
     private var title: String {
         switch today.days(until: selected) {
-        case 0: "今日"
-        case 1: "明日"
-        case -1: "昨日"
-        default: "アジェンダ"
+        case 0: String(localized: "Today")
+        case 1: String(localized: "Tomorrow")
+        case -1: String(localized: "Yesterday")
+        default: String(localized: "Agenda")
         }
     }
 
@@ -259,10 +259,18 @@ private struct DayStrip: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(date.date().formatted(.dateTime.month().day().weekday(.wide))
-            + (items.isEmpty ? "" : "、\(items.count)件")
-            + ((events[date]?.count).map { "、予定\($0)件" } ?? ""))
+        .accessibilityLabel(spokenLabel(date, items: items.count, events: events[date]?.count))
         .accessibilityAddTraits(date == selected ? .isSelected : [])
+    }
+
+    private func spokenLabel(_ date: OrgDate, items: Int, events: Int?) -> String {
+        let day = date.date().formatted(.dateTime.month().day().weekday(.wide))
+        return switch (items, events) {
+        case (0, nil): day
+        case let (items, nil): String(localized: "\(day), \(items) items")
+        case let (0, events?): String(localized: "\(day), \(events) events")
+        case let (items, events?): String(localized: "\(day), \(items) items, \(events) events")
+        }
     }
 
     private func foreground(_ date: OrgDate) -> Color {
@@ -332,7 +340,7 @@ private struct EventRow: View {
         }
         // Plain, so the title keeps the label color instead of the link tint.
         .buttonStyle(.plain)
-        .accessibilityHint("カレンダーで開きます")
+        .accessibilityHint("Opens in Calendar.")
     }
 
     private var subtitle: String {
@@ -361,6 +369,6 @@ private struct ProgressRing: View {
         }
         .frame(width: 30, height: 30)
         .accessibilityElement()
-        .accessibilityLabel("今日のTODO \(total)件中\(done)件完了")
+        .accessibilityLabel("\(done) of \(total) to-dos done today")
     }
 }

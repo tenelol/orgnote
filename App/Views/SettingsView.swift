@@ -8,7 +8,7 @@ struct SettingsView: View {
     @Environment(CalendarEvents.self) private var events
     @AppStorage("captureAsTodo") private var asTodo = false
     @State private var picking = false
-    @State private var denied: String?
+    @State private var calendarDenied = false
     @State private var notificationsBlocked = false
 
     var body: some View {
@@ -16,17 +16,17 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
-                    LabeledContent("保存場所", value: store.locationDescription)
-                    Button("別のフォルダを選ぶ…") { picking = true }
+                    LabeledContent("Location", value: store.locationDescription)
+                    Button("Choose Another Folder…") { picking = true }
                     if store.storage == nil {
-                        Button("Orgnoteのフォルダに戻す") { Task { await store.useAppFolder() } }
+                        Button("Return to Orgnote Folder") { Task { await store.useAppFolder() } }
                     }
                 } footer: {
-                    Text("ノートは .org ファイルです。iCloud Driveのフォルダを選ぶと、パソコンの ~/org などとそのまま同期できます。")
+                    Text("Notebooks are .org files. Choose a folder in iCloud Drive to keep them in sync with a folder like ~/org on your computer.")
                 }
 
-                Section("新規メモ") {
-                    Picker("保存先", selection: $store.inboxPath) {
+                Section("New Memo") {
+                    Picker("Save To", selection: $store.inboxPath) {
                         if store.files[store.inboxPath] == nil {
                             Text(store.inboxPath).tag(store.inboxPath)
                         }
@@ -34,66 +34,66 @@ struct SettingsView: View {
                             Text(file.id).tag(file.id)
                         }
                     }
-                    Toggle("最初からTODOにする", isOn: $asTodo)
+                    Toggle("Start as To-do", isOn: $asTodo)
                 }
 
                 Section {
-                    Toggle("カレンダーの予定を表示", isOn: Binding {
+                    Toggle("Show Calendar Events", isOn: Binding {
                         events.isEnabled
                     } set: { on in
                         Task {
-                            if await !events.setEnabled(on) { denied = "カレンダー" }
+                            if await !events.setEnabled(on) { calendarDenied = true }
                         }
                     })
                     if events.isEnabled {
-                        NavigationLink("表示するカレンダー") { CalendarChoice() }
+                        NavigationLink("Calendars to Show") { CalendarChoice() }
                     }
                 } header: {
-                    Text("カレンダー")
+                    Text("Calendar")
                 } footer: {
-                    Text("iPhoneの設定 › アプリ › カレンダー › カレンダーアカウントにGoogleアカウントを追加すると、Googleカレンダーの予定もアジェンダに並びます。予定は読むだけで変更しません。")
+                    Text("Add your Google account in iPhone Settings › Apps › Calendar › Calendar Accounts to see Google Calendar events in the agenda too. Events are only read, never changed.")
                 }
 
                 Section {
                     if notificationsBlocked {
-                        Button("通知を許可する…") {
+                        Button("Allow Notifications…") {
                             if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                         }
                     }
                     ForEach(TaskNotifications.shared.reminders) { reminder in
-                        LabeledContent(reminder.title.isEmpty ? "無題" : reminder.title,
+                        LabeledContent(reminder.title.isEmpty ? String(localized: "Untitled") : reminder.title,
                                        value: reminder.date.formatted(.dateTime.month().day().hour().minute()))
                             .swipeActions {
-                                Button("削除", systemImage: "trash", role: .destructive) {
+                                Button("Delete", systemImage: "trash", role: .destructive) {
                                     TaskNotifications.shared.remove(reminder)
                                 }
                             }
                     }
                 } header: {
-                    Text("通知")
+                    Text("Reminders")
                 } footer: {
-                    Text("新規メモの「通知を追加」で設定します。通知はこのiPhoneだけに保存され、ファイルには書き込みません。完了したTODOの通知は鳴りません。")
+                    Text("Set reminders with Add Reminder in a new memo. Reminders are kept only on this iPhone and aren’t written to your files. Reminders for completed to-dos don’t go off.")
                 }
 
                 Section {
-                    LabeledContent("TODOキーワード", value: "TODO | DONE")
-                    NavigationLink("バックアップ") { BackupList() }
+                    LabeledContent("To-do Keywords", value: "TODO | DONE")
+                    NavigationLink("Backups") { BackupList() }
                 } footer: {
-                    Text("ファイルに #+TODO: 行があれば、そのキーワードを使います。バックアップには、競合したときに残さなかった版が入ります。")
+                    Text("If a file has a #+TODO: line, its keywords are used. Backups hold the versions you didn’t keep when a conflict occurred.")
                 }
             }
             .task {
                 notificationsBlocked = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus == .denied
             }
-            .alert("\(denied ?? "")が許可されていません", isPresented: Binding { denied != nil } set: { if !$0 { denied = nil } }) {
-                Button("設定を開く") {
+            .alert("Calendar Access Not Allowed", isPresented: $calendarDenied) {
+                Button("Open Settings") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                 }
-                Button("キャンセル", role: .cancel) {}
+                Button("Cancel", role: .cancel) {}
             } message: {
-                Text("iPhoneの設定 › アプリ › Orgnote で許可すると使えます。")
+                Text("Allow access in iPhone Settings › Apps › Orgnote.")
             }
-            .navigationTitle("設定")
+            .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -104,7 +104,7 @@ struct SettingsView: View {
                 switch result {
                 case let .success(url): store.choose(folder: url)
                 case let .failure(error):
-                    store.notice = Notice(message: "フォルダを開けませんでした。（\(error.localizedDescription)）", isError: true)
+                    store.notice = Notice(message: String(localized: "Couldn’t open the folder. (\(error.localizedDescription))"), isError: true)
                 }
             }
         }
@@ -136,11 +136,11 @@ private struct CalendarChoice: View {
                 }
             }
         }
-        .navigationTitle("表示するカレンダー")
+        .navigationTitle("Calendars to Show")
         .overlay {
             if events.calendars.isEmpty {
-                ContentUnavailableView("カレンダーがありません", systemImage: "calendar",
-                                       description: Text("iPhoneの設定でGoogleアカウントのカレンダーをオンにしてください。"))
+                ContentUnavailableView("No Calendars", systemImage: "calendar",
+                                       description: Text("Turn on the calendars for your Google account in iPhone Settings."))
             }
         }
     }
@@ -157,11 +157,11 @@ private struct BackupList: View {
                     .lineLimit(2)
             }
         }
-        .navigationTitle("バックアップ")
+        .navigationTitle("Backups")
         .overlay {
             if backups.isEmpty {
-                ContentUnavailableView("バックアップはありません", systemImage: "clock.arrow.circlepath",
-                                       description: Text("他の端末と同時に編集して競合したとき、残さなかった版がここに保存されます。"))
+                ContentUnavailableView("No Backups", systemImage: "clock.arrow.circlepath",
+                                       description: Text("When edits on another device conflict, the version you didn’t keep is saved here."))
             }
         }
     }

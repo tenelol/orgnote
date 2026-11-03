@@ -33,14 +33,14 @@ struct RootView: View {
             TriageView()
         }
         .alert(
-            store.conflict.map { "\(($0.fileID as NSString).lastPathComponent) が他の端末でも変更されました" } ?? "",
+            store.conflict.map { String(localized: "\(($0.fileID as NSString).lastPathComponent) was also changed on another device") } ?? "",
             isPresented: Binding { store.conflict != nil } set: { if !$0 { store.conflict = nil } },
             presenting: store.conflict
         ) { _ in
-            Button("この端末の内容を残す") { store.resolveConflict(keepLocal: true) }
-            Button("他の端末の内容を使う") { store.resolveConflict(keepLocal: false) }
+            Button("Keep This Device’s Version") { store.resolveConflict(keepLocal: true) }
+            Button("Use Other Device’s Version") { store.resolveConflict(keepLocal: false) }
         } message: { _ in
-            Text("残さなかった方は「設定 › バックアップ」に保存されます。")
+            Text("The version you don’t keep is saved in Settings › Backups.")
         }
         .overlay(alignment: .top) { NoticeBanner() }
         .onChange(of: scenePhase, initial: true) { _, phase in
@@ -79,15 +79,15 @@ struct RootView: View {
 
     private var tabs: some View {
         TabView(selection: $tab) {
-            Tab("メモ", systemImage: "note.text", value: AppTab.notes) {
+            Tab("Notes", systemImage: "note.text", value: AppTab.notes) {
                 NavigationStack(path: router.path(.notes)) { LibraryView().orgDestinations() }
             }
-            Tab("アジェンダ", systemImage: "calendar", value: AppTab.agenda) {
+            Tab("Agenda", systemImage: "calendar", value: AppTab.agenda) {
                 NavigationStack(path: router.path(.agenda)) { AgendaView().orgDestinations() }
             }
             // Only overdue items earn a badge; a daily count would always be on.
             .badge(store.agenda().overdue.count)
-            Tab("TODO", systemImage: "checklist", value: AppTab.todo) {
+            Tab("To-dos", systemImage: "checklist", value: AppTab.todo) {
                 NavigationStack(path: router.path(.todo)) { TodoView().orgDestinations() }
             }
             Tab(value: AppTab.search, role: .search) {
@@ -130,7 +130,7 @@ private struct CaptureAccessory: View {
                     .font(.body.weight(.semibold))
                     .foregroundStyle(.tint)
                     .accessibilityHidden(true)
-                Text("新規メモ")
+                Text("New Memo")
                     .font(.body.weight(.medium))
                 if placement != .inline {
                     Spacer(minLength: 8)
@@ -144,7 +144,7 @@ private struct CaptureAccessory: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityHint("\(store.inboxPath) に追記します")
+        .accessibilityHint("Adds the memo to \(store.inboxPath).")
     }
 }
 
@@ -163,7 +163,7 @@ private struct NoticeBanner: View {
                     .font(.footnote)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 if notice.isError {
-                    Button("閉じる", systemImage: "xmark") { withAnimation { store.notice = nil } }
+                    Button("Close", systemImage: "xmark") { withAnimation { store.notice = nil } }
                         .labelStyle(.iconOnly)
                         .font(.footnote.weight(.semibold))
                         .frame(minWidth: 44, minHeight: 44)

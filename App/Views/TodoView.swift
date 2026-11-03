@@ -19,9 +19,9 @@ struct TodoView: View {
         var id: String { rawValue }
         var title: String {
             switch self {
-            case .file: "ノート"
-            case .priority: "優先度"
-            case .tag: "タグ"
+            case .file: String(localized: "Notebook")
+            case .priority: String(localized: "Priority")
+            case .tag: String(localized: "Tag")
             }
         }
     }
@@ -67,35 +67,35 @@ struct TodoView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("TODO")
+        .navigationTitle("To-dos")
         .onDisappear { justDone = [] }
         .overlay {
             if all.isEmpty {
                 ContentUnavailableView {
-                    Label("TODOはありません", systemImage: "checkmark.circle")
+                    Label("No To-dos", systemImage: "checkmark.circle")
                 } description: {
-                    Text("新規メモで「TODO」を選ぶか、見出しに TODO を付けるとここに集まります。")
+                    Text("Tap TODO in a new memo, or add TODO to a heading, to see it here.")
                 } actions: {
-                    Button("新規TODO") {
+                    Button("New To-do") {
                         router.captureStartsAsTodo = true
                         router.showCapture = true
                     }
                     .buttonStyle(.borderedProminent)
                 }
             } else if groups.isEmpty {
-                ContentUnavailableView("該当するTODOはありません", systemImage: "line.3.horizontal.decrease.circle",
-                                       description: Text("絞り込みを「すべて」に戻すと全件が表示されます。"))
+                ContentUnavailableView("No Matching To-dos", systemImage: "line.3.horizontal.decrease.circle",
+                                       description: Text("Set the filter back to All to see every to-do."))
             }
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    Picker("まとめ方", selection: $grouping) {
+                    Picker("Group By", selection: $grouping) {
                         ForEach(Grouping.allCases) { Text($0.title).tag($0) }
                     }
-                    Toggle("完了済みを表示", isOn: $showsDone)
+                    Toggle("Show Completed", isOn: $showsDone)
                 } label: {
-                    Label("表示", systemImage: "line.3.horizontal.decrease")
+                    Label("View Options", systemImage: "line.3.horizontal.decrease")
                 }
             }
         }
@@ -112,8 +112,8 @@ struct TodoView: View {
                 .font(.system(size: 44, weight: .bold, design: .rounded).monospacedDigit())
                 .contentTransition(.numericText())
             VStack(alignment: .leading, spacing: 2) {
-                Text("件のこり").font(.headline)
-                Text(dueThisWeek > 0 ? "今週が期限 \(dueThisWeek)件" : "今週が期限のものはありません")
+                Text("Remaining").font(.headline)
+                Text(dueThisWeek > 0 ? "\(dueThisWeek) due this week" : "Nothing due this week")
                     .font(.subheadline)
                     .foregroundStyle(dueThisWeek > 0 ? Color.red : Color.secondary)
             }
@@ -129,24 +129,24 @@ struct TodoView: View {
             .map(\.key)
         return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                chip("すべて", .all)
-                chip("期限・予定あり", .dated, symbol: "calendar")
-                chip("優先度 高", .urgent, symbol: "exclamationmark.3")
-                ForEach(tags, id: \.self) { chip("#\($0)", .tag($0)) }
+                chip(Text("All"), .all)
+                chip(Text("With Dates"), .dated, symbol: "calendar")
+                chip(Text("High Priority"), .urgent, symbol: "exclamationmark.3")
+                ForEach(tags, id: \.self) { chip(Text(verbatim: "#\($0)"), .tag($0)) }
             }
             .padding(.horizontal, 4)
         }
         .scrollClipDisabled()
     }
 
-    private func chip(_ title: String, _ value: Filter, symbol: String? = nil) -> some View {
+    private func chip(_ title: Text, _ value: Filter, symbol: String? = nil) -> some View {
         let isOn = filter == value
         return Button {
             withAnimation(.snappy) { filter = value }
         } label: {
             HStack(spacing: 4) {
                 if let symbol { Image(systemName: symbol).imageScale(.small) }
-                Text(title)
+                title
             }
             .font(.subheadline.weight(.medium))
             .padding(.horizontal, 14)
@@ -243,7 +243,7 @@ struct TodoView: View {
         case .priority:
             let groups = Dictionary(grouping: entries) { $0.headline.priority ?? "" }
             return groups.keys.sorted { ($0.isEmpty ? "~" : $0) < ($1.isEmpty ? "~" : $1) }.map { key in
-                Group(title: key.isEmpty ? "優先度なし" : "\(PriorityLabel.marks(key))  優先度 \(PriorityLabel.spoken(key))",
+                Group(title: key.isEmpty ? String(localized: "No Priority") : String(localized: "\(PriorityLabel.marks(key))  \(PriorityLabel.spoken(key)) Priority"),
                       fileID: nil, entries: groups[key]!.sorted(by: order))
             }
         case .tag:
@@ -254,7 +254,7 @@ struct TodoView: View {
                 }
             }
             return groups.keys.sorted { ($0.isEmpty ? "\u{FFFF}" : $0) < ($1.isEmpty ? "\u{FFFF}" : $1) }.map { key in
-                Group(title: key.isEmpty ? "タグなし" : "#\(key)", fileID: nil, entries: groups[key]!.sorted(by: order))
+                Group(title: key.isEmpty ? String(localized: "No Tag") : "#\(key)", fileID: nil, entries: groups[key]!.sorted(by: order))
             }
         }
     }

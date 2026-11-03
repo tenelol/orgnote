@@ -90,7 +90,7 @@ final class CalendarEvents {
         for event in store.events(matching: store.predicateForEvents(withStart: start, end: end, calendars: shown)) {
             let item = CalendarEvent(
                 id: "\(event.calendarItemIdentifier)#\(event.startDate.timeIntervalSince1970)",
-                title: event.title?.isEmpty == false ? event.title : "無題",
+                title: event.title?.isEmpty == false ? event.title : String(localized: "Untitled"),
                 start: event.startDate, end: event.endDate, isAllDay: event.isAllDay,
                 color: event.calendar.cgColor.map(UIColor.init(cgColor:)) ?? .systemGray,
                 calendar: event.calendar.title)

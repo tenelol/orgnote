@@ -3,8 +3,8 @@ import AppIntents
 /// Opens the capture sheet. Assign it to the Action Button or Control Center
 /// for Notes-like instant capture.
 struct NewNoteIntent: AppIntent {
-    static let title: LocalizedStringResource = "新規メモ"
-    static let description = IntentDescription("Orgnoteのキャプチャ画面を開きます。")
+    static let title: LocalizedStringResource = "New Memo"
+    static let description = IntentDescription("Opens the new memo screen in Orgnote.")
     static let supportedModes: IntentModes = .foreground
 
     @MainActor func perform() async throws -> some IntentResult {
@@ -15,13 +15,13 @@ struct NewNoteIntent: AppIntent {
 
 /// Appends text to the inbox without opening the app, for Siri and Shortcuts.
 struct AddNoteIntent: AppIntent {
-    static let title: LocalizedStringResource = "メモを追加"
-    static let description = IntentDescription("テキストを新規メモの保存先（既定は refile.org）に追記します。")
+    static let title: LocalizedStringResource = "Add Memo"
+    static let description = IntentDescription("Adds text to where new memos are saved (refile.org by default).")
 
-    @Parameter(title: "内容")
+    @Parameter(title: "Text")
     var text: String
 
-    @Parameter(title: "TODOにする", default: false)
+    @Parameter(title: "Make To-do", default: false)
     var isTodo: Bool
 
     @MainActor func perform() async throws -> some IntentResult & ProvidesDialog {
@@ -30,9 +30,9 @@ struct AddNoteIntent: AppIntent {
         guard store.phase == .ready,
               await store.capture(text, keyword: isTodo ? "TODO" : nil) != nil
         else {
-            return .result(dialog: "Orgnoteでフォルダを選んでから使ってください。")
+            return .result(dialog: "Choose a folder in Orgnote first.")
         }
-        return .result(dialog: "\(store.inboxPath) に追加しました。")
+        return .result(dialog: "Added to \(store.inboxPath).")
     }
 }
 
@@ -40,14 +40,14 @@ struct OrgnoteShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: NewNoteIntent(),
-            phrases: ["\(.applicationName)で新規メモ", "New note in \(.applicationName)"],
-            shortTitle: "新規メモ",
+            phrases: ["New note in \(.applicationName)"],
+            shortTitle: "New Memo",
             systemImageName: "square.and.pencil"
         )
         AppShortcut(
             intent: AddNoteIntent(),
-            phrases: ["\(.applicationName)に追加", "Add to \(.applicationName)"],
-            shortTitle: "メモを追加",
+            phrases: ["Add to \(.applicationName)"],
+            shortTitle: "Add Memo",
             systemImageName: "tray.and.arrow.down"
         )
     }

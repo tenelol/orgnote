@@ -32,7 +32,7 @@ struct OrgFile: Identifiable {
             }
             return trimmed
         }
-        return "追加のテキストなし"
+        return String(localized: "No additional text")
     }
 }
 
@@ -116,7 +116,7 @@ final class LibraryStore {
     var locationDescription: String {
         switch storage {
         case .iCloud: "iCloud Drive › Orgnote"
-        case .device: "このiPhone内 › Orgnote"
+        case .device: String(localized: "On My iPhone › Orgnote")
         case nil: folderURL?.lastPathComponent ?? ""
         }
     }
@@ -161,7 +161,7 @@ final class LibraryStore {
             UserDefaults.standard.removeObject(forKey: Keys.storage)
             storage = nil
         } catch {
-            notice = Notice(message: "フォルダを記憶できませんでした。もう一度選んでください。（\(error.localizedDescription)）", isError: true)
+            notice = Notice(message: String(localized: "Couldn’t remember the folder. Choose it again. (\(error.localizedDescription))"), isError: true)
             return
         }
         close()
@@ -181,7 +181,7 @@ final class LibraryStore {
 
     private func openAppFolder(_ storage: Storage, seeding: Bool) async {
         guard let url = await Task.detached(operation: { FolderIO.appFolder(iCloud: storage == .iCloud) }).value else {
-            notice = Notice(message: "iCloud Driveに接続できません。設定でiCloudにサインインしているか確認してください。", isError: true)
+            notice = Notice(message: String(localized: "Can’t connect to iCloud Drive. Check that you’re signed in to iCloud in Settings."), isError: true)
             phase = .needsFolder
             return
         }
@@ -289,7 +289,7 @@ final class LibraryStore {
         }.value
 
         if folders != Set(folderList) { folders = Set(folderList) }
-        if recovered > 0 { notice = Notice(message: "iCloudで競合した\(recovered)件の版を「設定 › バックアップ」に保存しました") }
+        if recovered > 0 { notice = Notice(message: String(localized: "Saved \(recovered) conflicting iCloud versions to Settings › Backups")) }
         errors = failures
 
         let present = Set(infos.map(\.id))
@@ -328,7 +328,7 @@ final class LibraryStore {
             .map { item in
                 TodaySnapshot.Item(
                     id: item.id,
-                    title: item.headline.displayTitle.isEmpty ? "無題" : item.headline.displayTitle,
+                    title: item.headline.displayTitle.isEmpty ? String(localized: "Untitled") : item.headline.displayTitle,
                     fileID: item.fileID, line: item.headline.lineIndex,
                     day: item.date.date(), time: item.time?.string,
                     isDeadline: item.kind == .deadline, isDone: item.headline.isDone,
@@ -476,7 +476,7 @@ final class LibraryStore {
             files[id]?.modified = FolderIO.modificationDate(of: url) ?? .now
             saveSnapshot()
         case let .failure(error):
-            notice = Notice(message: "\(file.name) を保存できませんでした。編集内容はアプリ内に残っています。（\(error.localizedDescription)）", isError: true)
+            notice = Notice(message: String(localized: "Couldn’t save \(file.name). Your edits are kept in the app. (\(error.localizedDescription))"), isError: true)
         }
     }
 
@@ -555,7 +555,7 @@ final class LibraryStore {
             edit(target) { $0.insertSubtree(subtree, under: parent) }
             edit(source) { $0.removeSubtree(at: line) }
         }
-        notice = Notice(message: "「\(title)」を\(files[target]?.displayName ?? target)に移動しました")
+        notice = Notice(message: String(localized: "Moved “\(title)” to \(files[target]?.displayName ?? target)"))
         return true
     }
 
@@ -601,7 +601,7 @@ final class LibraryStore {
         do {
             try await Task.detached { try FolderIO.createFolder(at: url) }.value
         } catch {
-            notice = Notice(message: "フォルダを作成できませんでした。（\(error.localizedDescription)）", isError: true)
+            notice = Notice(message: String(localized: "Couldn’t create the folder. (\(error.localizedDescription))"), isError: true)
             return nil
         }
         folders.insert(path)
@@ -642,7 +642,7 @@ final class LibraryStore {
             try await Task.detached { try FolderIO.delete(file.url) }.value
         } catch {
             files[id] = file
-            notice = Notice(message: "\(file.displayName) を削除できませんでした。（\(error.localizedDescription)）", isError: true)
+            notice = Notice(message: String(localized: "Couldn’t delete \(file.displayName). (\(error.localizedDescription))"), isError: true)
             return false
         }
         savedText[id] = nil

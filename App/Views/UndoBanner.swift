@@ -14,11 +14,11 @@ struct UndoBanner: View {
     var body: some View {
         if let entry = deleted {
             HStack {
-                Text("「\(entry.title)」を削除しました")
+                Text("Deleted “\(entry.title)”")
                     .font(.footnote)
                     .lineLimit(1)
                 Spacer()
-                Button("取り消す") {
+                Button("Undo") {
                     restore(entry)
                     withAnimation(.snappy) { deleted = nil }
                 }

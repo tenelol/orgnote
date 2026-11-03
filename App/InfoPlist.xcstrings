@@ -1,0 +1,24 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSCalendarsFullAccessUsageDescription" : {
+      "comment" : "Privacy - Calendars Full Access Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Orgnote shows events from your iPhone calendars, such as Google Calendar, in the agenda. It never changes them."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Googleカレンダーなど、iPhoneのカレンダーの予定をアジェンダに並べて表示します。予定を変更することはありません。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

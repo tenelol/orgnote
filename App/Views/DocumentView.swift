@@ -94,21 +94,21 @@ struct DocumentView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     if let range {
                         NavigationLink(value: Route.file(fileID, line: range.lowerBound)) {
-                            Label("ノート全体", systemImage: "doc.plaintext")
+                            Label("Entire Notebook", systemImage: "doc.plaintext")
                         }
                     } else {
-                        Button("アウトライン", systemImage: "list.bullet.indent") { showOutline = true }
+                        Button("Outline", systemImage: "list.bullet.indent") { showOutline = true }
                             .disabled(file.document.headlines.isEmpty)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Toggle(isOn: Binding { !livePreview } set: { livePreview = !$0 }) {
-                            Label("Orgの記法を表示", systemImage: "chevron.left.forwardslash.chevron.right")
+                            Label("Show Org Markup", systemImage: "chevron.left.forwardslash.chevron.right")
                         }
-                        ShareLink(item: file.url) { Label("共有…", systemImage: "square.and.arrow.up") }
+                        ShareLink(item: file.url) { Label("Share…", systemImage: "square.and.arrow.up") }
                     } label: {
-                        Label("その他", systemImage: "ellipsis")
+                        Label("More", systemImage: "ellipsis")
                     }
                 }
             }
@@ -119,7 +119,7 @@ struct DocumentView: View {
                 }
             }
             .sheet(item: $pickingDate) { pick in
-                DatePickerSheet(title: pick.kind == .deadline ? "期限" : "予定日", date: pick.date) { date in
+                DatePickerSheet(title: pick.kind == .deadline ? "Deadline" : "Schedule", date: pick.date) { date in
                     setPlanning(pick.kind, OrgTimestamp(date: OrgDate(date)), line: pick.line)
                 }
             }
@@ -139,11 +139,11 @@ struct DocumentView: View {
                 }
             }
         } else if narrowed, store.files[fileID] != nil {
-            ContentUnavailableView("メモが見つかりません", systemImage: "doc.questionmark",
-                                   description: Text("移動または削除された可能性があります。"))
+            ContentUnavailableView("Memo Not Found", systemImage: "doc.questionmark",
+                                   description: Text("It may have been moved or deleted."))
         } else {
-            ContentUnavailableView("ファイルが見つかりません", systemImage: "doc.questionmark",
-                                   description: Text("\(fileID) は移動または削除された可能性があります。"))
+            ContentUnavailableView("File Not Found", systemImage: "doc.questionmark",
+                                   description: Text("\(fileID) may have been moved or deleted."))
         }
     }
 
@@ -180,7 +180,7 @@ struct DocumentView: View {
 
 struct DatePickerSheet: View {
     @Environment(\.dismiss) private var dismiss
-    var title: String
+    var title: LocalizedStringKey
     @State var date: Date
     var onPick: (Date) -> Void
 
@@ -193,10 +193,10 @@ struct DatePickerSheet: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("キャンセル", systemImage: "xmark", role: .cancel) { dismiss() }
+                        Button("Cancel", systemImage: "xmark", role: .cancel) { dismiss() }
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("完了", systemImage: "checkmark", role: .confirm) {
+                        Button("Done", systemImage: "checkmark", role: .confirm) {
                             onPick(date)
                             dismiss()
                         }

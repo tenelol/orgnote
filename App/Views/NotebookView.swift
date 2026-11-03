@@ -43,28 +43,28 @@ struct NotebookView: View {
             .overlay {
                 if groups.isEmpty {
                     ContentUnavailableView {
-                        Label("メモがありません", systemImage: style.symbol)
+                        Label("No Memos", systemImage: style.symbol)
                     } description: {
-                        Text("このノートに書いたメモがここに並びます。")
+                        Text("Memos you write in this notebook appear here.")
                     } actions: {
-                        Button("新規メモ") { newMemo() }.buttonStyle(.borderedProminent)
+                        Button("New Memo") { newMemo() }.buttonStyle(.borderedProminent)
                     }
                 }
             }
             .toolbar {
                 if fileID == store.inboxPath, !groups.isEmpty {
                     ToolbarItem(placement: .topBarLeading) {
-                        Button("整理する", systemImage: "rectangle.stack") { router.showTriage = true }
+                        Button("Sort Memos", systemImage: "rectangle.stack") { router.showTriage = true }
                             .labelStyle(.titleAndIcon)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink(value: Route.file(fileID, line: nil)) {
-                        Label("全体をテキストで開く", systemImage: "doc.plaintext")
+                        Label("Open as Plain Text", systemImage: "doc.plaintext")
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("新規メモ", systemImage: "square.and.pencil", action: newMemo)
+                    Button("New Memo", systemImage: "square.and.pencil", action: newMemo)
                 }
             }
             .sheet(item: $moving) { request in
@@ -76,8 +76,8 @@ struct NotebookView: View {
                 }
             }
         } else {
-            ContentUnavailableView("ノートが見つかりません", systemImage: "book.closed",
-                                   description: Text("\(fileID) は移動または削除された可能性があります。"))
+            ContentUnavailableView("Notebook Not Found", systemImage: "book.closed",
+                                   description: Text("\(fileID) may have been moved or deleted."))
         }
     }
 
@@ -89,14 +89,14 @@ struct NotebookView: View {
         }
         .swipeActions(edge: .trailing) {
             // Destructive stays red even though the list is tinted with the notebook color.
-            Button("削除", systemImage: "trash", role: .destructive) { delete(entry) }
+            Button("Delete", systemImage: "trash", role: .destructive) { delete(entry) }
                 .tint(.red)
-            Button("移動", systemImage: "folder") { moving = MoveRequest(fileID: fileID, line: entry.lineIndex) }
+            Button("Move", systemImage: "folder") { moving = MoveRequest(fileID: fileID, line: entry.lineIndex) }
                 .tint(.indigo)
         }
         .swipeActions(edge: .leading) {
             if entry.keyword != nil {
-                Button(entry.isDone ? "未完了に戻す" : "完了にする",
+                Button(entry.isDone ? "Mark as Not Done" : "Mark as Done",
                        systemImage: entry.isDone ? "arrow.uturn.backward" : "checkmark") {
                     store.edit(fileID) { $0.toggleDone(forHeadlineAt: entry.lineIndex) }
                 }
@@ -104,13 +104,13 @@ struct NotebookView: View {
             }
         }
         .contextMenu {
-            Button("移動…", systemImage: "folder") { moving = MoveRequest(fileID: fileID, line: entry.lineIndex) }
-            Button(entry.keyword == nil ? "TODOにする" : "TODOを外す", systemImage: "checkmark.circle") {
+            Button("Move…", systemImage: "folder") { moving = MoveRequest(fileID: fileID, line: entry.lineIndex) }
+            Button(entry.keyword == nil ? "Make To-do" : "Unmark To-do", systemImage: "checkmark.circle") {
                 store.edit(fileID) { $0.setKeyword(entry.keyword == nil ? $0.keywords.active.first : nil,
                                                    forHeadlineAt: entry.lineIndex) }
             }
             Divider()
-            Button("削除", systemImage: "trash", role: .destructive) { delete(entry) }
+            Button("Delete", systemImage: "trash", role: .destructive) { delete(entry) }
         }
     }
 
@@ -183,15 +183,15 @@ struct MemoCard: View {
                 .buttonStyle(.borderless)
                 .padding(.leading, -8)
                 .padding(.vertical, -8)
-                .accessibilityLabel(headline.isDone ? "未完了に戻す" : "完了にする")
+                .accessibilityLabel(headline.isDone ? "Mark as Not Done" : "Mark as Done")
             }
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     if let priority = headline.priority {
                         Text(PriorityLabel.marks(priority)).font(.headline).foregroundStyle(.red)
-                            .accessibilityLabel("優先度 \(PriorityLabel.spoken(priority))")
+                            .accessibilityLabel("\(PriorityLabel.spoken(priority)) priority")
                     }
-                    Text(headline.displayTitle.isEmpty ? "無題" : headline.displayTitle)
+                    Text(headline.displayTitle.isEmpty ? String(localized: "Untitled") : headline.displayTitle)
                         .font(.headline)
                         .strikethrough(headline.isDone, color: .secondary)
                         .foregroundStyle(headline.isDone ? .secondary : .primary)
@@ -213,7 +213,7 @@ struct MemoCard: View {
                             .foregroundStyle(.secondary)
                     }
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("チェック \(headline.checkboxes.total)件中\(headline.checkboxes.done)件")
+                    .accessibilityLabel("\(headline.checkboxes.done) of \(headline.checkboxes.total) checked")
                 }
                 let chips = chips
                 if !chips.isEmpty {
@@ -249,7 +249,7 @@ struct MemoCard: View {
         var chips: [Chip] = []
         let today = OrgDate(.now)
         if let deadline = headline.deadline {
-            chips.append(Chip(symbol: "flag.fill", text: "期限 \(DateLabel.short(deadline.date))",
+            chips.append(Chip(symbol: "flag.fill", text: String(localized: "Due \(DateLabel.short(deadline.date))"),
                               alert: !headline.isDone && deadline.date <= today))
         }
         if let scheduled = headline.scheduled {
@@ -259,7 +259,7 @@ struct MemoCard: View {
         let children = document.headlines.filter {
             $0.lineIndex > headline.lineIndex && $0.lineIndex < headline.subtreeEndLineIndex
         }.count
-        if children > 0 { chips.append(Chip(symbol: "square.stack", text: "\(children)件")) }
+        if children > 0 { chips.append(Chip(symbol: "square.stack", text: String(localized: "\(children) items"))) }
         chips += headline.tags.map { Chip(symbol: "number", text: $0, accent: true) }
         if let created = document.created(of: headline) {
             chips.append(Chip(symbol: "clock", text: DateLabel.short(created.date)))

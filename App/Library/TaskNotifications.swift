@@ -98,7 +98,7 @@ final class TaskNotifications: NSObject {
 
     private func content(for reminder: Reminder, in store: LibraryStore) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
-        content.title = reminder.title.isEmpty ? "無題" : reminder.title
+        content.title = reminder.title.isEmpty ? String(localized: "Untitled") : reminder.title
         let fileID = headline(for: reminder, in: store)?.0 ?? reminder.fileID
         content.body = store.files[fileID]?.displayName ?? (fileID as NSString).deletingPathExtension
         content.sound = .default

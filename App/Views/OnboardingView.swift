@@ -22,21 +22,21 @@ struct OnboardingView: View {
                     .padding(.top, 48)
 
                 VStack(spacing: 10) {
-                    Text("Orgnoteへようこそ")
+                    Text("Welcome to Orgnote")
                         .font(.largeTitle.bold())
                         .multilineTextAlignment(.center)
-                    Text("思いついたことをすぐに書いて、TODOや予定もまとめて見られるメモアプリです。")
+                    Text("Write down ideas the moment they come, and see your to-dos and dates in one place.")
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
 
                 VStack(alignment: .leading, spacing: 18) {
-                    Feature(symbol: "square.and.pencil", title: "すぐに書ける",
-                            detail: "「新規メモ」を押して書くだけ。1行目が見出しになります。")
-                    Feature(symbol: "calendar", title: "予定とTODO",
-                            detail: "日付を付けたTODOはアジェンダに並び、通知も設定できます。")
-                    Feature(symbol: "doc.plaintext", title: "ただのテキスト",
-                            detail: "ノートは .org ファイル。パソコンでも開けて、EmacsやNeovimのOrg-modeでもそのまま編集できます。")
+                    Feature(symbol: "square.and.pencil", title: "Write Instantly",
+                            detail: "Just tap New Memo and start typing. The first line becomes the heading.")
+                    Feature(symbol: "calendar", title: "Dates and To-dos",
+                            detail: "To-dos with dates appear in the agenda, and you can set reminders for them.")
+                    Feature(symbol: "doc.plaintext", title: "Just Plain Text",
+                            detail: "Notebooks are .org files. Open them on your computer and edit them as they are in Org mode for Emacs or Neovim.")
                 }
             }
             .padding(.horizontal, 32)
@@ -52,7 +52,7 @@ struct OnboardingView: View {
                     }
                 } label: {
                     Group {
-                        if starting { ProgressView() } else { Text("はじめる") }
+                        if starting { ProgressView() } else { Text("Get Started") }
                     }
                     .font(.headline)
                     .frame(maxWidth: .infinity)
@@ -64,14 +64,14 @@ struct OnboardingView: View {
                 .accessibilityIdentifier("onboarding.start")
 
                 Text(iCloud == true
-                     ? "ノートはiCloud Driveの「Orgnote」フォルダに保存され、ほかのデバイスとも同期します。"
-                     : "ノートはこのiPhoneに保存され、「ファイル」アプリの このiPhone内 › Orgnote から開けます。")
+                     ? "Notebooks are saved in the Orgnote folder in iCloud Drive and sync with your other devices."
+                     : "Notebooks are saved on this iPhone. Open them in the Files app under On My iPhone › Orgnote.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .opacity(iCloud == nil ? 0 : 1)
 
-                Button("Org-modeのフォルダがある方はこちら") { picking = true }
+                Button("Use an Existing Org Folder") { picking = true }
                     .font(.footnote.weight(.semibold))
                     .disabled(starting)
                     .accessibilityIdentifier("onboarding.pickFolder")
@@ -85,7 +85,7 @@ struct OnboardingView: View {
             switch result {
             case let .success(url): store.choose(folder: url)
             case let .failure(error):
-                store.notice = Notice(message: "フォルダを開けませんでした。もう一度選んでください。（\(error.localizedDescription)）", isError: true)
+                store.notice = Notice(message: String(localized: "Couldn’t open the folder. Choose it again. (\(error.localizedDescription))"), isError: true)
             }
         }
     }
@@ -93,8 +93,8 @@ struct OnboardingView: View {
 
 private struct Feature: View {
     var symbol: String
-    var title: String
-    var detail: String
+    var title: LocalizedStringKey
+    var detail: LocalizedStringKey
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {

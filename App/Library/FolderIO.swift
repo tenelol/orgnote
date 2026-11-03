@@ -19,7 +19,7 @@ nonisolated enum FolderIOError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case let .notUTF8(name): "\(name) はUTF-8のテキストとして読めません"
+        case let .notUTF8(name): String(localized: "\(name) can’t be read as UTF-8 text")
         }
     }
 }

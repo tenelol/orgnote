@@ -48,7 +48,7 @@ struct SearchView: View {
                             }
                         }
                     } header: {
-                        Text("ノート").textCase(nil)
+                        Text("Notebooks").textCase(nil)
                     }
                 }
                 if results.isEmpty, places.files.isEmpty, places.folders.isEmpty {
@@ -64,14 +64,14 @@ struct SearchView: View {
                             }
                         }
                     } header: {
-                        Text("結果 \(results.count)件").textCase(nil)
+                        Text("\(results.count) Results").textCase(nil)
                     }
                 }
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("検索")
-        .searchable(text: $query, tokens: $tokens, prompt: "ノート名・見出し・本文・#タグ") { token in
+        .navigationTitle("Search")
+        .searchable(text: $query, tokens: $tokens, prompt: "Notebooks, headings, text, #tags") { token in
             Label(token.tag, systemImage: "number")
         }
         .onChange(of: query) { _, text in
@@ -88,7 +88,7 @@ struct SearchView: View {
     @ViewBuilder private var browse: some View {
         let tags = tagCounts
         if !tags.isEmpty {
-            Section("タグ") {
+            Section("Tags") {
                 FlowLayout(spacing: 10) {
                     ForEach(tags, id: \.tag) { entry in
                         Button {
@@ -99,7 +99,7 @@ struct SearchView: View {
                                 .foregroundStyle(.tint)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("タグ \(entry.tag)、\(entry.count)件")
+                        .accessibilityLabel("Tag \(entry.tag), \(entry.count) items")
                     }
                 }
                 .padding(.vertical, 6)
@@ -115,17 +115,17 @@ struct SearchView: View {
                 }
             } header: {
                 HStack {
-                    Text("最近開いたメモ")
+                    Text("Recently Opened")
                     Spacer()
-                    Button("消去") { withAnimation { recents.clear() } }
+                    Button("Clear") { withAnimation { recents.clear() } }
                         .font(.footnote)
                 }
                 .textCase(nil)
             }
         }
         if tags.isEmpty, recent.isEmpty {
-            ContentUnavailableView("メモを探す", systemImage: "magnifyingglass",
-                                   description: Text("ノート名、見出しや本文の言葉、#タグで探せます。"))
+            ContentUnavailableView("Find Memos", systemImage: "magnifyingglass",
+                                   description: Text("Search by notebook name, words in headings or text, or #tag."))
                 .listRowBackground(Color.clear)
         }
     }
@@ -246,9 +246,9 @@ private struct ResultRow: View {
                 if result.headline.keyword != nil {
                     Image(systemName: result.headline.isDone ? "checkmark.circle.fill" : "circle")
                         .foregroundStyle(result.headline.isDone ? Color.accentColor : Color.secondary)
-                        .accessibilityLabel(result.headline.isDone ? "完了" : "未完了")
+                        .accessibilityLabel(result.headline.isDone ? "Done" : "Not Done")
                 }
-                Text(highlighted(result.headline.displayTitle.isEmpty ? "無題" : result.headline.displayTitle))
+                Text(highlighted(result.headline.displayTitle.isEmpty ? String(localized: "Untitled") : result.headline.displayTitle))
                     .font(.headline)
                     .lineLimit(2)
             }

@@ -1,51 +1,74 @@
 # Orgnote
 
-iCloud Driveに置いたOrg-modeファイルを、純正メモのような軽さで書いて管理するiPhoneアプリ。正本はただの `.org` ファイルなので、MacのNeovim（nvim-orgmode）からも同じファイルをそのまま編集できる。
+**Org-mode notes on iPhone that feel as quick as Apple Notes.**
 
-- **メモ**: `.org` ファイル1つを「ノート」として、色とアイコンの付いた表紙で並べる（表紙の設定は端末内に保存し、ファイルは変えない）。ノートを開くと、見出しが1件ずつのカードとして並び、子のあるレベル1見出しはセクションになる。カードを開くとその見出しだけを編集できる。上段のタイルから、今日の予定と整理モードへ移れる。表紙を長押しすると、表紙の編集や削除ができる（新規メモの保存先は削除できない）。削除したノートの中身は「設定 › バックアップ」に残り、ファイルは iCloud Drive の「最近削除した項目」へ移る。
-- **整理（refile）**: カードの「移動」で、ほかのノートや見出しの下へ子の見出しごと移す。移動先のノートや見出しはその場で作れる。「整理」モードでは、新規メモの保存先にたまった見出しを1件ずつ、移動・TODO化・完了・削除（取り消し可能）・あとで、のどれかで片付ける。
-- **アジェンダ**: 前後半年分の日付の帯（自由にスクロールでき、予定のある日に点）で日を選び、その日の予定を「終日」と時刻順の「時間」に分けて表示する。`SCHEDULED` / `DEADLINE` / 本文中のアクティブなタイムスタンプが対象で、繰り返し（`+1w` `++1w` `.+1d`）に対応する。右上の円が今日のTODOの進み具合。設定でオンにすると、iPhoneのカレンダー（設定でGoogleアカウントを追加すればGoogleカレンダーも）の予定を同じ欄に並べる。予定は読むだけで、タップするとカレンダーアプリで開く。
-- **TODO**: 残り件数と今週の期限の要約、チップでの絞り込み（期限・予定あり、優先度 高、タグ）。ノートの表紙の色でまとめ、ノート・優先度・タグ別にも切り替えられる。
-- **検索**: 入力前はタグ雲と最近開いたメモ。`#タグ` はトークンとして絞り込みに使える。ノート名・フォルダ名に一致するものは先頭に出す。見出しと本文の結果はノートと親の見出しを添え、一致箇所に色を付ける。
-- **新規メモ**: タブバー上のボタン、ショートカット、アクションボタンから開く。エディタと同じライブプレビューとキーボード上のOrgコマンドが使え、1行目が見出しになる。
-- **エディタ**: ライブプレビュー。Orgの記号は隠して、TODOとチェックボックスは丸ボタン、予定日・期限はチップとして表示し、カーソルのある行だけ素の記法に戻す。ファイルの文字は変えず、記号は見えなくするだけなので、Neovim側には影響しない。キーボード上にOrgコマンド（見出し・TODO・チェック・予定日・期限・優先度）を置き、メニューから「Orgの記法を表示」に切り替えられる。
-- **通知**: 新規メモの保存先の下にある「通知を追加」で日時を選ぶと、その時刻にローカル通知する。通知はアプリの中（この端末）だけに保存し、orgファイルには書き込まない。見出しのタイトルで項目を探し直すので、移動しても通知をタップするとその見出しを開き、完了したTODOの通知は鳴らさない。一覧と削除は設定画面から。
-- **ウィジェット**: 今日のTODOと期限切れのTODOを表示する（ホーム画面の小・中サイズとロック画面用）。アプリが今週分のタスクをApp Groupに書き出し、ウィジェットはそれを読むだけ。
+Orgnote is a notes, to-do and agenda app whose every notebook is a plain `.org` file. Jot something down in a second, check off tasks, see your week at a glance — and open the very same files in Emacs or Neovim on your computer. No account, no server, no lock-in.
 
-## 同期のしくみ
+[日本語のREADMEはこちら](README.ja.md)
 
-アプリは、ユーザーが選んだiCloud Driveのフォルダを、security-scoped bookmarkで読み書きする。iCloudのentitlementは使わないため、無料のApple IDでも実機で動く（ただし署名は7日ごとに更新が必要）。
+## Features
 
-- 読み書きは `NSFileCoordinator` 経由で行う。変更の検知は `NSFilePresenter` と、アプリが前面にある間の4秒ごとのポーリングを併用する。
-- 編集は短い遅延のあとに保存する。保存の直前にディスク上の内容を確認し、Macでの変更とぶつかった場合はどちらの版を残すかを尋ねる。選ばなかった版は、アプリ内の `Application Support/Backups` に保存する。
-- Orgの編集は変更した行だけを書き換えるため、Neovim側やGitでの差分は最小限になる。
+- **Capture in a second.** New Memo sits above the tab bar, on the Action button and in Shortcuts. The first line becomes the heading.
+- **A live-preview editor.** Org markup fades away as you write: to-dos and checkboxes become buttons, dates become chips, and the raw syntax comes back on the line you are editing. The file itself never changes behind your back.
+- **Notebooks with covers.** Each `.org` file is a notebook; each heading is a card. Folders keep larger libraries tidy.
+- **Agenda and to-dos.** `SCHEDULED`, `DEADLINE`, plain timestamps and repeaters (`+1w`, `++1w`, `.+1d`) on a scrolling day strip, next to your Calendar events. A to-do list you can filter by priority and tag.
+- **Sort things out later.** New memos land in one notebook; Unsorted walks you through them one card at a time — move, schedule, finish, delete or skip.
+- **Reminders, search, widgets.** Set a reminder while you write, search headings, text and `#tags`, and keep today's to-dos on your Home and Lock Screen.
+- **Your files, your way.** Notes live in iCloud Drive (or on the device). Point Orgnote at an existing Org folder instead and it edits it in place, touching only the lines you change.
 
-## Mac側の設定
+## Install
 
-`~/org` をiCloud Drive内のフォルダへのsymlinkにする。逆向き（iCloud Drive内にsymlinkを置く）は同期されない。
+Orgnote is on its way to the App Store. Until then, build it from source (below).
+
+## Using Orgnote with Emacs or Neovim
+
+On first launch, tap **Start** to keep notes in an *Orgnote* folder in iCloud Drive, or choose **Already have an Org-mode folder?** to pick one you sync with your computer — for example `iCloud Drive/org`, symlinked to `~/org` on your Mac:
 
 ```bash
 mkdir -p ~/Library/Mobile\ Documents/com~apple~CloudDocs/org
 ```
 
-既存の `~/org` の中身をそのフォルダへ移したあと、`~/org` をsymlinkに置き換える。iPhoneでは、初回起動時に「iCloud Drive › org」を選ぶ。
+Move your existing `~/org` into that folder, then replace `~/org` with a symlink to it (a symlink placed *inside* iCloud Drive does not sync).
 
-## 実機への自動インストール
+Orgnote reads and writes through `NSFileCoordinator`, watches the folder for changes from other devices, and asks which version to keep if both sides changed a file; the one you did not keep goes to *Settings › Backups*.
 
-無料の個人チームで署名したアプリは7日で起動しなくなる。`scripts/refresh-device.sh <UDID>` は、`Config/Local.xcconfig` の署名設定で、プロファイルの残りが3日（`ORGNOTE_RENEW_DAYS`）を切ったときだけ新しいプロファイルを取得し、`main` にコミット済みの内容をビルドしてiPhoneに入れ直す。iPhoneに届かないときは何もせずに終わる。このMacではdotfilesの `orgnote-refresh` モジュールがlaunchdで6時間ごとに実行し、ログを `~/Library/Logs/orgnote-refresh.log` に残す。
+## Building from source
 
-## 開発
-
-バンドルID・App Group・チームは `Config/Orgnote.xcconfig` にまとめてあり、既定値（`com.example.orgnote`、チームなし）のままでシミュレータで動く。実機やApp Store向けに署名するときは、`Config/Local.xcconfig.example` を `Config/Local.xcconfig` にコピーして自分の値を入れる（gitには入らない）。
+Requirements: Xcode 26.4 or later (iOS 26.1 SDK) and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
 
 ```bash
 xcodegen generate
+open Orgnote.xcodeproj
 ```
+
+The defaults in `Config/Orgnote.xcconfig` (bundle ID `com.example.orgnote`, no team) build and run in the Simulator as is. To run on a device or publish, copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` and fill in your team ID and bundle ID; that file is gitignored. iCloud Drive storage needs a paid developer account and is switched on there too.
+
+Run the tests:
 
 ```bash
 swift test --package-path Packages/OrgKit
 ```
 
-- `project.yml` からXcodeプロジェクトを生成する。Nixで入れたXcodeGenには既定の設定プリセットが含まれないため、必要なビルド設定は `project.yml` に明示している。
-- Orgの解析・編集・アジェンダは `Packages/OrgKit` にあり、Mac上でテストできる。
-- Debugビルドでは、起動引数 `-OrgnoteFolderPath <path>` を渡すとフォルダ選択を省略できる（シミュレータでの確認用）。
+```bash
+xcodebuild test -project Orgnote.xcodeproj -scheme Orgnote -destination 'platform=iOS Simulator,name=iPhone 17'
+```
+
+### Project layout
+
+- `App/` — the iOS app (SwiftUI, with a TextKit 2 editor in `App/Editor`).
+- `Widget/` — the Today widget, fed by a snapshot the app writes to the shared App Group.
+- `Packages/OrgKit/` — Org parsing, editing and the agenda, as a Swift package with its own tests.
+- `Config/` — build identity (bundle ID, App Group, team, iCloud).
+- `docs/RELEASING.md` — how to publish to the App Store.
+
+## Privacy
+
+Orgnote collects nothing. It has no analytics and talks to no server; your notes stay in your own files.
+
+## Contributing
+
+Issues and pull requests are welcome. Please keep changes focused and run the tests above before opening a pull request.
+
+## License
+
+[MIT](LICENSE)

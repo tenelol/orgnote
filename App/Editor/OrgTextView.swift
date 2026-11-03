@@ -255,8 +255,8 @@ final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
                 }
             }.map { entry in
                 let name = switch entry.toggle {
-                case .checkbox: "チェックを切り替える"
-                case .todo, .link: "完了を切り替える"
+                case .checkbox: String(localized: "Toggle Checkbox")
+                case .todo, .link: String(localized: "Toggle Done")
                 }
                 return UIAccessibilityCustomAction(name: name) { [weak self] _ in
                     self?.onToggle(entry.toggle)
@@ -467,8 +467,8 @@ final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
                             for: .normal)
             button.tintColor = done ? .tintColor : .secondaryLabel
             button.frame = CGRect(x: left + LivePreview.slot / 2 - 22, y: frames.line.midY - 22, width: 44, height: 44)
-            button.accessibilityLabel = done ? "完了" : "未完了"
-            button.accessibilityHint = done ? "未完了に戻します" : "完了にします"
+            button.accessibilityLabel = done ? String(localized: "Done") : String(localized: "Not Done")
+            button.accessibilityHint = done ? String(localized: "Marks as not done.") : String(localized: "Marks as done.")
             let toggle: OrgToggle = isTask ? .todo(line: headlineLine(for: overlay.line)) : .checkbox(line: overlay.line)
             button.addAction(UIAction { [weak self] _ in
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -530,7 +530,7 @@ final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
             else { return nil }
             let rect = firstRect(for: range)
             label.frame.origin = CGPoint(x: rect.minX, y: frames.line.midY - label.bounds.height / 2)
-            label.accessibilityLabel = "優先度"
+            label.accessibilityLabel = String(localized: "Priority")
             return label
         }
     }
@@ -549,20 +549,20 @@ final class OrgUITextView: UITextView, UIGestureRecognizerDelegate {
             button.isUserInteractionEnabled = false
             return button
         }
-        func action(_ title: String, _ image: String, _ choice: PlanningChoice, destructive: Bool = false) -> UIAction {
-            UIAction(title: title, image: UIImage(systemName: image), attributes: destructive ? .destructive : []) {
+        func action(_ title: LocalizedStringResource, _ image: String, _ choice: PlanningChoice, destructive: Bool = false) -> UIAction {
+            UIAction(title: String(localized: title), image: UIImage(systemName: image), attributes: destructive ? .destructive : []) {
                 [weak self] _ in self?.onCommand(.planning(chip.kind, choice), line)
             }
         }
-        button.menu = UIMenu(title: chip.kind == .deadline ? "期限" : "予定日", children: [
-            action("今日", "sun.max", .today),
-            action("明日", "sunrise", .tomorrow),
-            action("来週", "calendar.badge.clock", .nextWeek),
-            action("日付を選択…", "calendar", .pick),
-            UIMenu(options: .displayInline, children: [action("日付を外す", "xmark.circle", .clear, destructive: true)]),
+        button.menu = UIMenu(title: chip.kind == .deadline ? String(localized: "Deadline") : String(localized: "Schedule"), children: [
+            action("Today", "sun.max", .today),
+            action("Tomorrow", "sunrise", .tomorrow),
+            action("Next Week", "calendar.badge.clock", .nextWeek),
+            action("Choose Date…", "calendar", .pick),
+            UIMenu(options: .displayInline, children: [action("Remove Date", "xmark.circle", .clear, destructive: true)]),
         ])
         button.showsMenuAsPrimaryAction = true
-        button.accessibilityHint = "日付を変更します"
+        button.accessibilityHint = String(localized: "Changes the date.")
         return button
     }
 
@@ -590,7 +590,7 @@ private final class KeyboardBar: UIView {
         super.init(frame: CGRect(x: 0, y: 0, width: 320, height: 56))
         autoresizingMask = .flexibleHeight
 
-        func button(_ label: String, symbol: String? = nil, title: String? = nil) -> UIButton {
+        func button(_ label: LocalizedStringResource, symbol: String? = nil, title: String? = nil) -> UIButton {
             var config = UIButton.Configuration.plain()
             if let symbol {
                 config.image = UIImage(systemName: symbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: 17, weight: .semibold))
@@ -603,11 +603,11 @@ private final class KeyboardBar: UIView {
             config.baseForegroundColor = .label
             config.contentInsets = .zero
             let button = UIButton(configuration: config)
-            button.accessibilityLabel = label
+            button.accessibilityLabel = String(localized: label)
             return button
         }
 
-        func command(_ label: String, symbol: String? = nil, title: String? = nil, _ command: EditorCommand) -> UIButton {
+        func command(_ label: LocalizedStringResource, symbol: String? = nil, title: String? = nil, _ command: EditorCommand) -> UIButton {
             let b = button(label, symbol: symbol, title: title)
             b.addAction(UIAction { [weak controller, weak textView] _ in
                 guard let controller else { return }
@@ -618,16 +618,16 @@ private final class KeyboardBar: UIView {
             return b
         }
 
-        func menu(_ label: String, symbol: String, _ menu: UIMenu) -> UIButton {
+        func menu(_ label: LocalizedStringResource, symbol: String, _ menu: UIMenu) -> UIButton {
             let b = button(label, symbol: symbol)
             b.menu = menu
             b.showsMenuAsPrimaryAction = true
             return b
         }
 
-        func planningMenu(_ kind: PlanningKind, _ label: String) -> UIMenu {
-            func action(_ title: String, _ image: String, _ choice: PlanningChoice, destructive: Bool = false) -> UIAction {
-                UIAction(title: title, image: UIImage(systemName: image), attributes: destructive ? .destructive : []) {
+        func planningMenu(_ kind: PlanningKind, _ label: LocalizedStringResource) -> UIMenu {
+            func action(_ title: LocalizedStringResource, _ image: String, _ choice: PlanningChoice, destructive: Bool = false) -> UIAction {
+                UIAction(title: String(localized: title), image: UIImage(systemName: image), attributes: destructive ? .destructive : []) {
                     [weak controller, weak textView] _ in
                     guard let controller else { return }
                 // Commit any in-progress IME composition first, or the edit would be dropped.
@@ -635,24 +635,24 @@ private final class KeyboardBar: UIView {
                     controller.onCommand(.planning(kind, choice), controller.currentLine)
                 }
             }
-            return UIMenu(title: label, children: [
-                action("今日", "sun.max", .today),
-                action("明日", "sunrise", .tomorrow),
-                action("来週", "calendar.badge.clock", .nextWeek),
-                action("日付を選択…", "calendar", .pick),
-                UIMenu(options: .displayInline, children: [action("日付を外す", "xmark.circle", .clear, destructive: true)]),
+            return UIMenu(title: String(localized: label), children: [
+                action("Today", "sun.max", .today),
+                action("Tomorrow", "sunrise", .tomorrow),
+                action("Next Week", "calendar.badge.clock", .nextWeek),
+                action("Choose Date…", "calendar", .pick),
+                UIMenu(options: .displayInline, children: [action("Remove Date", "xmark.circle", .clear, destructive: true)]),
             ])
         }
 
-        let priority = UIMenu(title: "優先度", children:
-            [("A", "高"), ("B", "中"), ("C", "低")].map { value, title in
+        let priority = UIMenu(title: String(localized: "Priority"), children:
+            [("A", String(localized: "High")), ("B", String(localized: "Medium")), ("C", String(localized: "Low"))].map { value, title in
                 UIAction(title: "\(title)  [#\(value)]") { [weak controller, weak textView] _ in
                     guard let controller else { return }
                 // Commit any in-progress IME composition first, or the edit would be dropped.
                 textView?.unmarkText()
                     controller.onCommand(.priority(value), controller.currentLine)
                 }
-            } + [UIAction(title: "なし", attributes: .destructive) { [weak controller, weak textView] _ in
+            } + [UIAction(title: String(localized: "None"), attributes: .destructive) { [weak controller, weak textView] _ in
                 guard let controller else { return }
                 // Commit any in-progress IME composition first, or the edit would be dropped.
                 textView?.unmarkText()
@@ -660,10 +660,10 @@ private final class KeyboardBar: UIView {
             }])
 
         // Built on each open, so the line's current level carries the checkmark.
-        let heading = UIMenu(title: "見出し", children: [UIDeferredMenuElement.uncached { [weak controller, weak textView] completion in
+        let heading = UIMenu(title: String(localized: "Heading"), children: [UIDeferredMenuElement.uncached { [weak controller, weak textView] completion in
             let current = textView.flatMap { view in controller.map { Self.headingLevel(in: view.text, line: $0.currentLine) } } ?? nil
-            func action(_ title: String, _ level: Int?) -> UIAction {
-                let action = UIAction(title: title) { [weak controller, weak textView] _ in
+            func action(_ title: LocalizedStringResource, _ level: Int?) -> UIAction {
+                let action = UIAction(title: String(localized: title)) { [weak controller, weak textView] _ in
                     guard let controller else { return }
                     // Commit any in-progress IME composition first, or the edit would be dropped.
                     textView?.unmarkText()
@@ -673,18 +673,18 @@ private final class KeyboardBar: UIView {
                 return action
             }
             completion([
-                UIMenu(options: .displayInline, children: [action("見出し 1", 1), action("見出し 2", 2), action("見出し 3", 3)]),
-                action("本文", nil),
+                UIMenu(options: .displayInline, children: [action("Heading 1", 1), action("Heading 2", 2), action("Heading 3", 3)]),
+                action("Body Text", nil),
             ])
         }])
 
         let stack = UIStackView(arrangedSubviews: [
-            menu("見出し", symbol: "asterisk", heading),
-            command("TODOと完了を切り替え", title: "TODO", .cycleTodo),
-            command("チェックボックス", symbol: "checklist", .checkbox),
-            menu("予定日", symbol: "calendar", planningMenu(.scheduled, "予定日")),
-            menu("期限", symbol: "flag", planningMenu(.deadline, "期限")),
-            menu("優先度", symbol: "exclamationmark", priority),
+            menu("Heading", symbol: "asterisk", heading),
+            command("Toggle To-do", title: "TODO", .cycleTodo),
+            command("Checkbox", symbol: "checklist", .checkbox),
+            menu("Schedule", symbol: "calendar", planningMenu(.scheduled, "Schedule")),
+            menu("Deadline", symbol: "flag", planningMenu(.deadline, "Deadline")),
+            menu("Priority", symbol: "exclamationmark", priority),
         ])
         stack.distribution = .fillEqually
 
@@ -692,7 +692,7 @@ private final class KeyboardBar: UIView {
         commands.cornerConfiguration = .capsule()
         commands.contentView.addSubview(stack)
 
-        let dismiss = button("キーボードを閉じる", symbol: "keyboard.chevron.compact.down")
+        let dismiss = button("Hide Keyboard", symbol: "keyboard.chevron.compact.down")
         dismiss.addAction(UIAction { [weak textView] _ in textView?.resignFirstResponder() }, for: .primaryActionTriggered)
         let dismissGlass = UIVisualEffectView(effect: UIGlassEffect())
         dismissGlass.cornerConfiguration = .capsule()

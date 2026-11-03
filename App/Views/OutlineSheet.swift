@@ -21,12 +21,12 @@ struct OutlineSheet: View {
                             }
                         }
                         .tint(.primary)
-                        .accessibilityHint("この見出しへ移動します")
+                        .accessibilityHint("Goes to this heading.")
                     }
                 }
             }
             .listStyle(.plain)
-            .navigationTitle("アウトライン")
+            .navigationTitle("Outline")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -67,7 +67,7 @@ struct HeadlineRow: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityText)
         .accessibilityAddTraits(headline.isDone ? .isSelected : [])
-        .accessibilityAction(named: headline.isDone ? "未完了に戻す" : "完了にする") { toggle() }
+        .accessibilityAction(named: headline.isDone ? "Mark as Not Done" : "Mark as Done") { toggle() }
         .sensoryFeedback(.impact(weight: .light), trigger: taps)
     }
 
@@ -102,7 +102,7 @@ struct HeadlineRow: View {
                         .font(.body.weight(.bold))
                         .foregroundStyle(.red)
                 }
-                Text(headline.displayTitle.isEmpty ? "無題" : headline.displayTitle)
+                Text(headline.displayTitle.isEmpty ? String(localized: "Untitled") : headline.displayTitle)
                     .font(headline.level == 1 && headline.keyword == nil ? .headline : .body)
                     .strikethrough(headline.isDone, color: .secondary)
                     .foregroundStyle(headline.isDone ? .secondary : .primary)
@@ -134,26 +134,30 @@ struct HeadlineRow: View {
         if let subtitle { parts.append(subtitle) }
         if headline.checkboxes.total > 0 {
             parts.append(spoken
-                ? "チェック \(headline.checkboxes.total)件中\(headline.checkboxes.done)件"
+                ? String(localized: "\(headline.checkboxes.done) of \(headline.checkboxes.total) checked")
                 : "☑︎ \(headline.checkboxes.done)/\(headline.checkboxes.total)")
         }
         if subtitle == nil {
-            if let scheduled = headline.scheduled { parts.append("予定 \(DateLabel.short(scheduled.date))") }
-            if let deadline = headline.deadline { parts.append("期限 \(DateLabel.short(deadline.date))") }
+            if let scheduled = headline.scheduled { parts.append(String(localized: "Scheduled \(DateLabel.short(scheduled.date))")) }
+            if let deadline = headline.deadline { parts.append(String(localized: "Due \(DateLabel.short(deadline.date))")) }
         }
-        parts += headline.tags.map { spoken ? "タグ \($0)" : "#\($0)" }
-        return parts.joined(separator: spoken ? "、" : "  ")
+        parts += headline.tags.map { spoken ? String(localized: "Tag \($0)") : "#\($0)" }
+        return parts.joined(separator: spoken ? Self.spokenSeparator : "  ")
     }
 
     private var accessibilityText: String {
         var parts: [String] = []
-        if headline.keyword != nil { parts.append(headline.isDone ? "完了" : "未完了") }
-        if let priority = headline.priority { parts.append("優先度 \(PriorityLabel.spoken(priority))") }
-        parts.append(headline.displayTitle.isEmpty ? "無題" : headline.displayTitle)
-        if let trailing { parts.append(trailingIsAlert ? "\(trailing) 期限切れ" : trailing) }
+        if headline.keyword != nil { parts.append(headline.isDone ? String(localized: "Done") : String(localized: "Not Done")) }
+        if let priority = headline.priority { parts.append(String(localized: "\(PriorityLabel.spoken(priority)) priority")) }
+        parts.append(headline.displayTitle.isEmpty ? String(localized: "Untitled") : headline.displayTitle)
+        if let trailing { parts.append(trailingIsAlert ? String(localized: "\(trailing), overdue") : trailing) }
         let details = detailText(spoken: true)
         if !details.isEmpty { parts.append(details) }
-        return parts.joined(separator: "、")
+        return parts.joined(separator: Self.spokenSeparator)
+    }
+
+    private static var spokenSeparator: String {
+        String(localized: ", ", comment: "Separates the parts of a row read by VoiceOver.")
     }
 }
 
@@ -169,9 +173,9 @@ enum PriorityLabel {
 
     static func spoken(_ priority: String) -> String {
         switch priority.uppercased() {
-        case "A": "高"
-        case "B": "中"
-        default: "低"
+        case "A": String(localized: "High")
+        case "B": String(localized: "Medium")
+        default: String(localized: "Low")
         }
     }
 }
@@ -179,11 +183,11 @@ enum PriorityLabel {
 enum DateLabel {
     static func short(_ date: OrgDate, today: OrgDate = OrgDate(.now)) -> String {
         switch today.days(until: date) {
-        case 0: return "今日"
-        case 1: return "明日"
-        case -1: return "昨日"
+        case 0: return String(localized: "Today")
+        case 1: return String(localized: "Tomorrow")
+        case -1: return String(localized: "Yesterday")
         default:
-            return date.date().formatted(.dateTime.month(.defaultDigits).day().weekday(.short))
+            return date.date().formatted(.dateTime.month(.defaultDigits).day().weekday(.abbreviated))
         }
     }
 }
@@ -196,13 +200,13 @@ struct TaskActions: View {
 
     var body: some View {
         if headline.keyword != nil {
-            Button(headline.isDone ? "未完了に戻す" : "完了にする",
+            Button(headline.isDone ? "Mark as Not Done" : "Mark as Done",
                    systemImage: headline.isDone ? "arrow.uturn.backward" : "checkmark.circle") {
                 store.edit(fileID) { $0.toggleDone(forHeadlineAt: headline.lineIndex) }
             }
             if !headline.isDone {
-                Button("今日にする", systemImage: "sun.max") { Self.reschedule(store, fileID, headline, days: 0) }
-                Button("明日に延期", systemImage: "sunrise") { Self.reschedule(store, fileID, headline, days: 1) }
+                Button("Move to Today", systemImage: "sun.max") { Self.reschedule(store, fileID, headline, days: 0) }
+                Button("Postpone to Tomorrow", systemImage: "sunrise") { Self.reschedule(store, fileID, headline, days: 1) }
             }
         }
     }
@@ -230,7 +234,7 @@ struct TaskSwipeActions: ViewModifier {
         content
             .swipeActions(edge: .leading) {
                 if headline.keyword != nil {
-                    Button(headline.isDone ? "未完了に戻す" : "完了にする",
+                    Button(headline.isDone ? "Mark as Not Done" : "Mark as Done",
                            systemImage: headline.isDone ? "arrow.uturn.backward" : "checkmark") {
                         store.edit(fileID) { $0.toggleDone(forHeadlineAt: headline.lineIndex) }
                     }
@@ -239,11 +243,11 @@ struct TaskSwipeActions: ViewModifier {
             }
             .swipeActions(edge: .trailing) {
                 if headline.keyword != nil, !headline.isDone {
-                    Button("明日に延期", systemImage: "sunrise") {
+                    Button("Postpone to Tomorrow", systemImage: "sunrise") {
                         TaskActions.reschedule(store, fileID, headline, days: 1)
                     }
                     .tint(.orange)
-                    Button("今日にする", systemImage: "sun.max") {
+                    Button("Move to Today", systemImage: "sun.max") {
                         TaskActions.reschedule(store, fileID, headline, days: 0)
                     }
                     .tint(.blue)

@@ -35,7 +35,7 @@ struct CaptureView: View {
                         OrgCommands.toggle(toggle, in: &document)
                         text = document.text
                     },
-                    capture: .init(placeholder: "1行目が見出しになります"),
+                    capture: .init(placeholder: String(localized: "The first line becomes the heading")),
                     controller: controller
                 )
                 if let picking {
@@ -48,20 +48,20 @@ struct CaptureView: View {
                 }
             }
             .animation(.snappy, value: picking?.line)
-            .navigationTitle(isTask ? "新規TODO" : "新規メモ")
+            .navigationTitle(isTask ? "New To-do" : "New Memo")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("キャンセル", systemImage: "xmark", role: .cancel) {
+                    Button("Cancel", systemImage: "xmark", role: .cancel) {
                         if isEmpty { dismiss() } else { confirmingDiscard = true }
                     }
-                    .confirmationDialog("このメモを破棄しますか？", isPresented: $confirmingDiscard, titleVisibility: .visible) {
-                        Button("メモを破棄", role: .destructive) { dismiss() }
-                        Button("編集を続ける", role: .cancel) {}
+                    .confirmationDialog("Discard This Memo?", isPresented: $confirmingDiscard, titleVisibility: .visible) {
+                        Button("Discard Memo", role: .destructive) { dismiss() }
+                        Button("Keep Editing", role: .cancel) {}
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("追加", systemImage: "checkmark", role: .confirm) { submit() }
+                    Button("Add", systemImage: "checkmark", role: .confirm) { submit() }
                         .disabled(isEmpty)
                         .keyboardShortcut(.return, modifiers: .command)
                 }
@@ -82,14 +82,14 @@ struct CaptureView: View {
 
     private var destination: some View {
         Menu {
-            Picker("保存先", selection: $target) {
+            Picker("Save To", selection: $target) {
                 Text((store.inboxPath as NSString).deletingPathExtension).tag(String?.none)
                 ForEach(store.sortedFiles.filter { $0.id != store.inboxPath && !$0.isPlaceholder }) { file in
                     Text(file.displayName).tag(String?.some(file.id))
                 }
             }
         } label: {
-            Label("保存先: \(target.flatMap { store.files[$0]?.displayName } ?? (store.inboxPath as NSString).deletingPathExtension)",
+            Label("Save To: \(target.flatMap { store.files[$0]?.displayName } ?? (store.inboxPath as NSString).deletingPathExtension)",
                   systemImage: "tray.and.arrow.down")
                 .font(.footnote)
                 .foregroundStyle(Color(.secondaryLabel))
@@ -102,12 +102,12 @@ struct CaptureView: View {
     @ViewBuilder private var notification: some View {
         HStack(spacing: 8) {
             if let date = notifyAt {
-                Label("通知", systemImage: "bell.fill")
+                Label("Reminder", systemImage: "bell.fill")
                     .foregroundStyle(.tint)
                 Spacer()
-                DatePicker("通知", selection: Binding { date } set: { notifyAt = $0 }, in: Date.now...)
+                DatePicker("Reminder", selection: Binding { date } set: { notifyAt = $0 }, in: Date.now...)
                     .labelsHidden()
-                Button("通知を外す", systemImage: "xmark.circle.fill") {
+                Button("Remove Reminder", systemImage: "xmark.circle.fill") {
                     withAnimation(.snappy) { notifyAt = nil }
                 }
                 .labelStyle(.iconOnly)
@@ -116,7 +116,7 @@ struct CaptureView: View {
                 Button {
                     withAnimation(.snappy) { notifyAt = Self.nextHour() }
                 } label: {
-                    Label("通知を追加", systemImage: "bell")
+                    Label("Add Reminder", systemImage: "bell")
                         .foregroundStyle(Color(.secondaryLabel))
                         .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                 }
@@ -135,12 +135,12 @@ struct CaptureView: View {
 
     private func inlineDatePicker(kind: PlanningKind, line: Int) -> some View {
         VStack(alignment: .trailing, spacing: 0) {
-            DatePicker(kind == .deadline ? "期限" : "予定日", selection: $pickedDate, displayedComponents: .date)
+            DatePicker(kind == .deadline ? "Deadline" : "Schedule", selection: $pickedDate, displayedComponents: .date)
                 .datePickerStyle(.graphical)
             HStack {
-                Button("キャンセル") { picking = nil }
+                Button("Cancel") { picking = nil }
                 Spacer()
-                Button("完了") {
+                Button("Done") {
                     var document = OrgDocument(text: text)
                     OrgCommands.setPlanning(kind, OrgDate(pickedDate), at: line, in: &document)
                     text = document.text

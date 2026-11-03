@@ -1,0 +1,2874 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "#%@": {
+      "shouldTranslate": false
+    },
+    "%@  %@ Priority": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@  %2$@ Priority"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@  優先度 %2$@"
+          }
+        }
+      }
+    },
+    "%@ can’t be read as UTF-8 text": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ はUTF-8のテキストとして読めません"
+          }
+        }
+      }
+    },
+    "%@ may have been moved or deleted.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ は移動または削除された可能性があります。"
+          }
+        }
+      }
+    },
+    "%@ priority": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "優先度 %@"
+          }
+        }
+      }
+    },
+    "%@ was also changed on another device": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ が他の端末でも変更されました"
+          }
+        }
+      }
+    },
+    "%@ · %@": {
+      "comment": "A date followed by how often it repeats.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ ・%2$@"
+          }
+        }
+      }
+    },
+    "%@ · %lld to-dos": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$#@todos@"
+          },
+          "substitutions": {
+            "todos": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg to-do"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg to-dos"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · TODO %2$lld"
+          }
+        }
+      }
+    },
+    "%@, %lld events": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$#@events@"
+          },
+          "substitutions": {
+            "events": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg event"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg events"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@、予定%2$lld件"
+          }
+        }
+      }
+    },
+    "%@, %lld items": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$#@items@"
+          },
+          "substitutions": {
+            "items": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg item"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg items"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@、%2$lld件"
+          }
+        }
+      }
+    },
+    "%@, %lld items, %lld events": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$#@items@, %3$#@events@"
+          },
+          "substitutions": {
+            "events": {
+              "argNum": 3,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg event"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg events"
+                    }
+                  }
+                }
+              }
+            },
+            "items": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg item"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg items"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@、%2$lld件、予定%3$lld件"
+          }
+        }
+      }
+    },
+    "%@, overdue": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 期限切れ"
+          }
+        }
+      }
+    },
+    "%@: %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@: %2$lld"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$lld件"
+          }
+        }
+      }
+    },
+    "%lld": {
+      "shouldTranslate": false
+    },
+    "%lld Overdue": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "期限切れ %lld件"
+          }
+        }
+      }
+    },
+    "%lld Results": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Result"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Results"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "結果 %lld件"
+          }
+        }
+      }
+    },
+    "%lld due this week": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今週が期限 %lld件"
+          }
+        }
+      }
+    },
+    "%lld items": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld item"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld items"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld件"
+          }
+        }
+      }
+    },
+    "%lld left": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "残り %lld件"
+          }
+        }
+      }
+    },
+    "%lld memos": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld memo"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld memos"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メモ %lld件"
+          }
+        }
+      }
+    },
+    "%lld of %lld checked": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld of %2$lld checked"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "チェック %2$lld件中%1$lld件"
+          }
+        }
+      }
+    },
+    "%lld of %lld to-dos done today": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld of %2$#@total@ done today"
+          },
+          "substitutions": {
+            "total": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg to-do"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg to-dos"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日のTODO %2$lld件中%1$lld件完了"
+          }
+        }
+      }
+    },
+    "%lld/%lld": {
+      "shouldTranslate": false
+    },
+    "%lld/%lld to-dos done": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld/%2$#@total@ done"
+          },
+          "substitutions": {
+            "total": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg to-do"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg to-dos"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TODO %1$lld/%2$lld 完了"
+          }
+        }
+      }
+    },
+    ", ": {
+      "comment": "Separates the parts of a row read by VoiceOver.",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "、"
+          }
+        }
+      }
+    },
+    "A copy is kept in Settings › Backups.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除前の内容は「設定 › バックアップ」に残ります。"
+          }
+        }
+      }
+    },
+    "Add": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "追加"
+          }
+        }
+      }
+    },
+    "Add Heading": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新しい見出し"
+          }
+        }
+      }
+    },
+    "Add Heading…": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "見出しを追加…"
+          }
+        }
+      }
+    },
+    "Add Memo": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メモを追加"
+          }
+        }
+      }
+    },
+    "Add Notebook": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新しいノート"
+          }
+        }
+      }
+    },
+    "Add Notebook…": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新しいノート…"
+          }
+        }
+      }
+    },
+    "Add Reminder": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通知を追加"
+          }
+        }
+      }
+    },
+    "Add your Google account in iPhone Settings › Apps › Calendar › Calendar Accounts to see Google Calendar events in the agenda too. Events are only read, never changed.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhoneの設定 › アプリ › カレンダー › カレンダーアカウントにGoogleアカウントを追加すると、Googleカレンダーの予定もアジェンダに並びます。予定は読むだけで変更しません。"
+          }
+        }
+      }
+    },
+    "Added to %@.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ に追加しました。"
+          }
+        }
+      }
+    },
+    "Adds text to where new memos are saved (refile.org by default).": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テキストを新規メモの保存先（既定は refile.org）に追記します。"
+          }
+        }
+      }
+    },
+    "Adds the memo to %@.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ に追記します"
+          }
+        }
+      }
+    },
+    "Agenda": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アジェンダ"
+          }
+        }
+      }
+    },
+    "All": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべて"
+          }
+        }
+      }
+    },
+    "All Sorted": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべて整理しました"
+          }
+        }
+      }
+    },
+    "All-day": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "終日"
+          }
+        }
+      }
+    },
+    "Allow Notifications…": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通知を許可する…"
+          }
+        }
+      }
+    },
+    "Allow access in iPhone Settings › Apps › Orgnote.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhoneの設定 › アプリ › Orgnote で許可すると使えます。"
+          }
+        }
+      }
+    },
+    "Backups": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バックアップ"
+          }
+        }
+      }
+    },
+    "Body Text": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本文"
+          }
+        }
+      }
+    },
+    "Calendar": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カレンダー"
+          }
+        }
+      }
+    },
+    "Calendar Access Not Allowed": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カレンダーが許可されていません"
+          }
+        }
+      }
+    },
+    "Calendars to Show": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示するカレンダー"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャンセル"
+          }
+        }
+      }
+    },
+    "Can’t connect to iCloud Drive. Check that you’re signed in to iCloud in Settings.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud Driveに接続できません。設定でiCloudにサインインしているか確認してください。"
+          }
+        }
+      }
+    },
+    "Changes the date.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日付を変更します"
+          }
+        }
+      }
+    },
+    "Checkbox": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "チェックボックス"
+          }
+        }
+      }
+    },
+    "Choose Another Folder…": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "別のフォルダを選ぶ…"
+          }
+        }
+      }
+    },
+    "Choose Date…": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日付を選択…"
+          }
+        }
+      }
+    },
+    "Choose a folder in Orgnote first.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orgnoteでフォルダを選んでから使ってください。"
+          }
+        }
+      }
+    },
+    "Clear": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "消去"
+          }
+        }
+      }
+    },
+    "Close": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "閉じる"
+          }
+        }
+      }
+    },
+    "Color": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "色"
+          }
+        }
+      }
+    },
+    "Couldn’t create the folder. (%@)": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダを作成できませんでした。（%@）"
+          }
+        }
+      }
+    },
+    "Couldn’t delete %@. (%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t delete %1$@. (%2$@)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ を削除できませんでした。（%2$@）"
+          }
+        }
+      }
+    },
+    "Couldn’t open the folder. (%@)": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダを開けませんでした。（%@）"
+          }
+        }
+      }
+    },
+    "Couldn’t open the folder. Choose it again. (%@)": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダを開けませんでした。もう一度選んでください。（%@）"
+          }
+        }
+      }
+    },
+    "Couldn’t remember the folder. Choose it again. (%@)": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダを記憶できませんでした。もう一度選んでください。（%@）"
+          }
+        }
+      }
+    },
+    "Couldn’t save %@. Your edits are kept in the app. (%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t save %1$@. Your edits are kept in the app. (%2$@)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ を保存できませんでした。編集内容はアプリ内に残っています。（%2$@）"
+          }
+        }
+      }
+    },
+    "Cover": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表紙"
+          }
+        }
+      }
+    },
+    "Create": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "作成"
+          }
+        }
+      }
+    },
+    "Create a notebook from the menu in the top-right corner.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "右上のメニューからノートを作成できます。"
+          }
+        }
+      }
+    },
+    "Create and Move": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "作成して移動"
+          }
+        }
+      }
+    },
+    "Creates a folder in “%@”.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」にフォルダを作成します。"
+          }
+        }
+      }
+    },
+    "Creates an .org file in “%@”.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」に .org ファイルを作成します。"
+          }
+        }
+      }
+    },
+    "Daily": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毎日"
+          }
+        }
+      }
+    },
+    "Date": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日付"
+          }
+        }
+      }
+    },
+    "Dates and To-dos": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予定とTODO"
+          }
+        }
+      }
+    },
+    "Deadline": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "期限"
+          }
+        }
+      }
+    },
+    "Delete": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除"
+          }
+        }
+      }
+    },
+    "Delete Notebook": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノートを削除"
+          }
+        }
+      }
+    },
+    "Delete Notebook…": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノートを削除…"
+          }
+        }
+      }
+    },
+    "Delete “%@”?": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」を削除しますか？"
+          }
+        }
+      }
+    },
+    "Deleted “%@”": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」を削除しました"
+          }
+        }
+      }
+    },
+    "Discard Memo": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メモを破棄"
+          }
+        }
+      }
+    },
+    "Discard This Memo?": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このメモを破棄しますか？"
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完了"
+          }
+        }
+      }
+    },
+    "Done %@": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完了 %@"
+          }
+        }
+      }
+    },
+    "Downloading from iCloud": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloudからダウンロード中"
+          }
+        }
+      }
+    },
+    "Due %@": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "期限 %@"
+          }
+        }
+      }
+    },
+    "Edit Cover…": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表紙を編集…"
+          }
+        }
+      }
+    },
+    "Empty Folder": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "空のフォルダ"
+          }
+        }
+      }
+    },
+    "Empty notebook": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "空のノート"
+          }
+        }
+      }
+    },
+    "Entire Notebook": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノート全体"
+          }
+        }
+      }
+    },
+    "Every %lld days": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Every %lld day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Every %lld days"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld日ごと"
+          }
+        }
+      }
+    },
+    "Every %lld hours": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Every %lld hour"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Every %lld hours"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld時間ごと"
+          }
+        }
+      }
+    },
+    "Every %lld months": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Every %lld month"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Every %lld months"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lldか月ごと"
+          }
+        }
+      }
+    },
+    "Every %lld weeks": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Every %lld week"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Every %lld weeks"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld週ごと"
+          }
+        }
+      }
+    },
+    "Every %lld years": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Every %lld year"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Every %lld years"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld年ごと"
+          }
+        }
+      }
+    },
+    "File Not Found": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイルが見つかりません"
+          }
+        }
+      }
+    },
+    "Find Memos": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メモを探す"
+          }
+        }
+      }
+    },
+    "Folder Name": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダ名"
+          }
+        }
+      }
+    },
+    "Get Started": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "はじめる"
+          }
+        }
+      }
+    },
+    "Goes to this heading.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この見出しへ移動します"
+          }
+        }
+      }
+    },
+    "Group By": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "まとめ方"
+          }
+        }
+      }
+    },
+    "Heading": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "見出し"
+          }
+        }
+      }
+    },
+    "Heading 1": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "見出し 1"
+          }
+        }
+      }
+    },
+    "Heading 2": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "見出し 2"
+          }
+        }
+      }
+    },
+    "Heading 3": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "見出し 3"
+          }
+        }
+      }
+    },
+    "Hide Keyboard": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キーボードを閉じる"
+          }
+        }
+      }
+    },
+    "High": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高"
+          }
+        }
+      }
+    },
+    "High Priority": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "優先度 高"
+          }
+        }
+      }
+    },
+    "Hourly": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毎時間"
+          }
+        }
+      }
+    },
+    "Icon": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アイコン"
+          }
+        }
+      }
+    },
+    "If a file has a #+TODO: line, its keywords are used. Backups hold the versions you didn’t keep when a conflict occurred.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイルに #+TODO: 行があれば、そのキーワードを使います。バックアップには、競合したときに残さなかった版が入ります。"
+          }
+        }
+      }
+    },
+    "It may have been moved or deleted.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移動または削除された可能性があります。"
+          }
+        }
+      }
+    },
+    "Just Plain Text": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ただのテキスト"
+          }
+        }
+      }
+    },
+    "Just tap New Memo and start typing. The first line becomes the heading.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「新規メモ」を押して書くだけ。1行目が見出しになります。"
+          }
+        }
+      }
+    },
+    "Keep Editing": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "編集を続ける"
+          }
+        }
+      }
+    },
+    "Keep This Device’s Version": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この端末の内容を残す"
+          }
+        }
+      }
+    },
+    "Later": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あとで"
+          }
+        }
+      }
+    },
+    "Location": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存場所"
+          }
+        }
+      }
+    },
+    "Low": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "低"
+          }
+        }
+      }
+    },
+    "Make To-do": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TODOにする"
+          }
+        }
+      }
+    },
+    "Mark as Done": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完了にする"
+          }
+        }
+      }
+    },
+    "Mark as Not Done": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未完了に戻す"
+          }
+        }
+      }
+    },
+    "Marks as done.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完了にします"
+          }
+        }
+      }
+    },
+    "Marks as not done.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未完了に戻します"
+          }
+        }
+      }
+    },
+    "Medium": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中"
+          }
+        }
+      }
+    },
+    "Memo Not Found": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メモが見つかりません"
+          }
+        }
+      }
+    },
+    "Memo to Move": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移動するメモ"
+          }
+        }
+      }
+    },
+    "Memos you write are added to %@.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "書いたメモは %@ に追記されます。"
+          }
+        }
+      }
+    },
+    "Memos you write in this notebook appear here.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このノートに書いたメモがここに並びます。"
+          }
+        }
+      }
+    },
+    "Monthly": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毎月"
+          }
+        }
+      }
+    },
+    "More": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "その他"
+          }
+        }
+      }
+    },
+    "Move": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移動"
+          }
+        }
+      }
+    },
+    "Move To": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移動先"
+          }
+        }
+      }
+    },
+    "Move to Today": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日にする"
+          }
+        }
+      }
+    },
+    "Moved “%@” to %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moved “%1$@” to %2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%1$@」を%2$@に移動しました"
+          }
+        }
+      }
+    },
+    "Moves the memo to the top level of the notebook.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノートの一番上の階層に移動します"
+          }
+        }
+      }
+    },
+    "Move…": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移動…"
+          }
+        }
+      }
+    },
+    "New Folder": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規フォルダ"
+          }
+        }
+      }
+    },
+    "New Folder…": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規フォルダ…"
+          }
+        }
+      }
+    },
+    "New Memo": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規メモ"
+          }
+        }
+      }
+    },
+    "New Notebook": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規ノート"
+          }
+        }
+      }
+    },
+    "New Notebook…": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規ノート…"
+          }
+        }
+      }
+    },
+    "New To-do": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規TODO"
+          }
+        }
+      }
+    },
+    "Next Week": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "来週"
+          }
+        }
+      }
+    },
+    "No Backups": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バックアップはありません"
+          }
+        }
+      }
+    },
+    "No Calendars": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カレンダーがありません"
+          }
+        }
+      }
+    },
+    "No Date": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日付なし"
+          }
+        }
+      }
+    },
+    "No Matching To-dos": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "該当するTODOはありません"
+          }
+        }
+      }
+    },
+    "No Memos": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メモがありません"
+          }
+        }
+      }
+    },
+    "No Notebooks": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノートがありません"
+          }
+        }
+      }
+    },
+    "No Priority": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "優先度なし"
+          }
+        }
+      }
+    },
+    "No Tag": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タグなし"
+          }
+        }
+      }
+    },
+    "No To-dos": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TODOはありません"
+          }
+        }
+      }
+    },
+    "No additional text": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "追加のテキストなし"
+          }
+        }
+      }
+    },
+    "No unsorted memos.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未整理のメモはありません。"
+          }
+        }
+      }
+    },
+    "None": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "なし"
+          }
+        }
+      }
+    },
+    "Not Done": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未完了"
+          }
+        }
+      }
+    },
+    "Notebook": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノート"
+          }
+        }
+      }
+    },
+    "Notebook Name": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノート名"
+          }
+        }
+      }
+    },
+    "Notebook Not Found": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノートが見つかりません"
+          }
+        }
+      }
+    },
+    "Notebooks": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノート"
+          }
+        }
+      }
+    },
+    "Notebooks are .org files. Choose a folder in iCloud Drive to keep them in sync with a folder like ~/org on your computer.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノートは .org ファイルです。iCloud Driveのフォルダを選ぶと、パソコンの ~/org などとそのまま同期できます。"
+          }
+        }
+      }
+    },
+    "Notebooks are .org files. Open them on your computer and edit them as they are in Org mode for Emacs or Neovim.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノートは .org ファイル。パソコンでも開けて、EmacsやNeovimのOrg-modeでもそのまま編集できます。"
+          }
+        }
+      }
+    },
+    "Notebooks are saved in the Orgnote folder in iCloud Drive and sync with your other devices.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノートはiCloud Driveの「Orgnote」フォルダに保存され、ほかのデバイスとも同期します。"
+          }
+        }
+      }
+    },
+    "Notebooks are saved on this iPhone. Open them in the Files app under On My iPhone › Orgnote.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノートはこのiPhoneに保存され、「ファイル」アプリの このiPhone内 › Orgnote から開けます。"
+          }
+        }
+      }
+    },
+    "Notebooks, headings, text, #tags": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノート名・見出し・本文・#タグ"
+          }
+        }
+      }
+    },
+    "Notes": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メモ"
+          }
+        }
+      }
+    },
+    "Nothing Scheduled": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予定はありません"
+          }
+        }
+      }
+    },
+    "Nothing Scheduled Today": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日の予定はありません"
+          }
+        }
+      }
+    },
+    "Nothing due this week": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今週が期限のものはありません"
+          }
+        }
+      }
+    },
+    "On My iPhone › Orgnote": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このiPhone内 › Orgnote"
+          }
+        }
+      }
+    },
+    "Open Settings": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定を開く"
+          }
+        }
+      }
+    },
+    "Open as Plain Text": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全体をテキストで開く"
+          }
+        }
+      }
+    },
+    "Opens in Calendar.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カレンダーで開きます"
+          }
+        }
+      }
+    },
+    "Opens the new memo screen in Orgnote.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orgnoteのキャプチャ画面を開きます。"
+          }
+        }
+      }
+    },
+    "Outline": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アウトライン"
+          }
+        }
+      }
+    },
+    "Overdue · %lld to-dos": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Overdue · %lld to-do"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Overdue · %lld to-dos"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "期限切れあり · TODO %lld"
+          }
+        }
+      }
+    },
+    "Postpone to Tomorrow": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "明日に延期"
+          }
+        }
+      }
+    },
+    "Priority": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "優先度"
+          }
+        }
+      }
+    },
+    "Recently Opened": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近開いたメモ"
+          }
+        }
+      }
+    },
+    "Remaining": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "件のこり"
+          }
+        }
+      }
+    },
+    "Reminder": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通知"
+          }
+        }
+      }
+    },
+    "Reminders": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通知"
+          }
+        }
+      }
+    },
+    "Remove Date": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日付を外す"
+          }
+        }
+      }
+    },
+    "Remove Reminder": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通知を外す"
+          }
+        }
+      }
+    },
+    "Return to Orgnote Folder": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orgnoteのフォルダに戻す"
+          }
+        }
+      }
+    },
+    "Save New Memos Here": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規メモの保存先にする"
+          }
+        }
+      }
+    },
+    "Save To": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存先"
+          }
+        }
+      }
+    },
+    "Save To: %@": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存先: %@"
+          }
+        }
+      }
+    },
+    "Saved %lld conflicting iCloud versions to Settings › Backups": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Saved %lld conflicting iCloud version to Settings › Backups"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Saved %lld conflicting iCloud versions to Settings › Backups"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloudで競合した%lld件の版を「設定 › バックアップ」に保存しました"
+          }
+        }
+      }
+    },
+    "Schedule": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予定日"
+          }
+        }
+      }
+    },
+    "Scheduled %@": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予定 %@"
+          }
+        }
+      }
+    },
+    "Search": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "検索"
+          }
+        }
+      }
+    },
+    "Search by notebook name, words in headings or text, or #tag.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノート名、見出しや本文の言葉、#タグで探せます。"
+          }
+        }
+      }
+    },
+    "Set reminders with Add Reminder in a new memo. Reminders are kept only on this iPhone and aren’t written to your files. Reminders for completed to-dos don’t go off.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規メモの「通知を追加」で設定します。通知はこのiPhoneだけに保存され、ファイルには書き込みません。完了したTODOの通知は鳴りません。"
+          }
+        }
+      }
+    },
+    "Set the filter back to All to see every to-do.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "絞り込みを「すべて」に戻すと全件が表示されます。"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定"
+          }
+        }
+      }
+    },
+    "Share…": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "共有…"
+          }
+        }
+      }
+    },
+    "Show Calendar Events": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カレンダーの予定を表示"
+          }
+        }
+      }
+    },
+    "Show Completed": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完了済みを表示"
+          }
+        }
+      }
+    },
+    "Show Org Markup": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orgの記法を表示"
+          }
+        }
+      }
+    },
+    "Sort": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "整理"
+          }
+        }
+      }
+    },
+    "Sort Memos": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "整理する"
+          }
+        }
+      }
+    },
+    "Start as To-do": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最初からTODOにする"
+          }
+        }
+      }
+    },
+    "Tag": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タグ"
+          }
+        }
+      }
+    },
+    "Tag %@": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タグ %@"
+          }
+        }
+      }
+    },
+    "Tag %@, %lld items": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tag %1$@, %2$#@items@"
+          },
+          "substitutions": {
+            "items": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg item"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg items"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タグ %1$@、%2$lld件"
+          }
+        }
+      }
+    },
+    "Tags": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タグ"
+          }
+        }
+      }
+    },
+    "Tap TODO in a new memo, or add TODO to a heading, to see it here.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規メモで「TODO」を選ぶか、見出しに TODO を付けるとここに集まります。"
+          }
+        }
+      }
+    },
+    "Text": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内容"
+          }
+        }
+      }
+    },
+    "The %lld memos you put off will show again next time.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "The memo you put off will show again next time."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "The %lld memos you put off will show again next time."
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あとでに回した%lld件は、次に開いたときにもう一度表示されます。"
+          }
+        }
+      }
+    },
+    "The first line becomes the heading": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1行目が見出しになります"
+          }
+        }
+      }
+    },
+    "The version you don’t keep is saved in Settings › Backups.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "残さなかった方は「設定 › バックアップ」に保存されます。"
+          }
+        }
+      }
+    },
+    "This also deletes the %lld headings inside. A copy is kept in Settings › Backups.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "This also deletes the heading inside. A copy is kept in Settings › Backups."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "This also deletes the %lld headings inside. A copy is kept in Settings › Backups."
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中の見出し%lld件も一緒に消えます。削除前の内容は「設定 › バックアップ」に残ります。"
+          }
+        }
+      }
+    },
+    "Timed": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "時間"
+          }
+        }
+      }
+    },
+    "To-do Keywords": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TODOキーワード"
+          }
+        }
+      }
+    },
+    "To-dos": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TODO"
+          }
+        }
+      }
+    },
+    "To-dos with a scheduled date or deadline appear here.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TODOに予定日や期限を付けると、ここに並びます。"
+          }
+        }
+      }
+    },
+    "To-dos with dates appear in the agenda, and you can set reminders for them.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日付を付けたTODOはアジェンダに並び、通知も設定できます。"
+          }
+        }
+      }
+    },
+    "Today": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日"
+          }
+        }
+      }
+    },
+    "Toggle Checkbox": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "チェックを切り替える"
+          }
+        }
+      }
+    },
+    "Toggle Done": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完了を切り替える"
+          }
+        }
+      }
+    },
+    "Toggle To-do": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TODOと完了を切り替え"
+          }
+        }
+      }
+    },
+    "Tomorrow": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "明日"
+          }
+        }
+      }
+    },
+    "Turn on the calendars for your Google account in iPhone Settings.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhoneの設定でGoogleアカウントのカレンダーをオンにしてください。"
+          }
+        }
+      }
+    },
+    "Undo": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取り消す"
+          }
+        }
+      }
+    },
+    "Unmark To-do": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TODOを外す"
+          }
+        }
+      }
+    },
+    "Unreadable Files": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "読めないファイル"
+          }
+        }
+      }
+    },
+    "Unsorted": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未整理"
+          }
+        }
+      }
+    },
+    "Untitled": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無題"
+          }
+        }
+      }
+    },
+    "Use Other Device’s Version": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "他の端末の内容を使う"
+          }
+        }
+      }
+    },
+    "Use an Existing Org Folder": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Org-modeのフォルダがある方はこちら"
+          }
+        }
+      }
+    },
+    "View Options": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示"
+          }
+        }
+      }
+    },
+    "Weekly": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毎週"
+          }
+        }
+      }
+    },
+    "Welcome to Orgnote": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orgnoteへようこそ"
+          }
+        }
+      }
+    },
+    "When edits on another device conflict, the version you didn’t keep is saved here.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "他の端末と同時に編集して競合したとき、残さなかった版がここに保存されます。"
+          }
+        }
+      }
+    },
+    "Where new memos are saved": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規メモの保存先"
+          }
+        }
+      }
+    },
+    "With Dates": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "期限・予定あり"
+          }
+        }
+      }
+    },
+    "Write Instantly": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すぐに書ける"
+          }
+        }
+      }
+    },
+    "Write down ideas the moment they come, and see your to-dos and dates in one place.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "思いついたことをすぐに書いて、TODOや予定もまとめて見られるメモアプリです。"
+          }
+        }
+      }
+    },
+    "Yearly": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毎年"
+          }
+        }
+      }
+    },
+    "Yesterday": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "昨日"
+          }
+        }
+      }
+    },
+    "–": {
+      "shouldTranslate": false
+    }
+  },
+  "version": "1.0"
+}

@@ -38,11 +38,11 @@ struct TodayProvider: TimelineProvider {
     }
 
     static let samples: [TodaySnapshot.Item] = [
-        .init(id: "1", title: "週次レポートを提出", fileID: "", line: 0, day: .now, time: nil,
+        .init(id: "1", title: String(localized: "Submit weekly report"), fileID: "", line: 0, day: .now, time: nil,
               isDeadline: true, isDone: false, priority: "A"),
-        .init(id: "2", title: "定例ミーティングの準備", fileID: "", line: 0, day: .now, time: "10:00",
+        .init(id: "2", title: String(localized: "Prepare for team meeting"), fileID: "", line: 0, day: .now, time: "10:00",
               isDeadline: false, isDone: false, priority: nil),
-        .init(id: "3", title: "筋トレ", fileID: "", line: 0, day: .now, time: nil,
+        .init(id: "3", title: String(localized: "Work out"), fileID: "", line: 0, day: .now, time: nil,
               isDeadline: false, isDone: false, priority: nil),
     ]
 }
@@ -54,8 +54,8 @@ struct TodayWidget: Widget {
                 .containerBackground(.fill.tertiary, for: .widget)
                 .widgetURL(TodaySnapshot.agendaURL)
         }
-        .configurationDisplayName("今日のTODO")
-        .description("予定日と期限が今日のTODOと、期限切れのTODOを表示します。")
+        .configurationDisplayName("Today’s To-dos")
+        .description("Shows to-dos scheduled or due today, plus overdue ones.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular, .accessoryCircular])
     }
 }
@@ -73,17 +73,17 @@ struct TodayWidgetView: View {
                 Text("\(entry.open.count)")
             }
             .gaugeStyle(.accessoryCircularCapacity)
-            .accessibilityLabel("今日のTODO \(entry.open.count)件")
+            .accessibilityLabel("\(entry.open.count) to-dos today")
         case .accessoryRectangular:
             VStack(alignment: .leading, spacing: 1) {
-                Text("今日 \(entry.open.count)件")
+                Text("Today: \(entry.open.count)")
                     .font(.headline)
                     .widgetAccentable()
                 ForEach(entry.open.prefix(2)) { item in
                     Text(item.title).font(.caption).lineLimit(1)
                 }
                 if entry.open.isEmpty {
-                    Text("TODOはありません").font(.caption).foregroundStyle(.secondary)
+                    Text("No To-dos").font(.caption).foregroundStyle(.secondary)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -95,7 +95,7 @@ struct TodayWidgetView: View {
     private func list(limit: Int) -> some View {
         VStack(alignment: .leading, spacing: family == .systemSmall ? 6 : 7) {
             HStack(alignment: .firstTextBaseline) {
-                Text("今日")
+                Text("Today")
                     .font(.headline)
                     .foregroundStyle(Color.orgAccent)
                 Spacer()
@@ -105,7 +105,7 @@ struct TodayWidgetView: View {
             }
             if entry.open.isEmpty {
                 Spacer()
-                Label("今日のTODOはありません", systemImage: "checkmark.circle")
+                Label("No To-dos Today", systemImage: "checkmark.circle")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -117,7 +117,7 @@ struct TodayWidgetView: View {
                 }
                 Spacer(minLength: 0)
                 if entry.open.count > limit {
-                    Text("ほか\(entry.open.count - limit)件")
+                    Text("\(entry.open.count - limit) more")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -149,9 +149,9 @@ private struct TodayRow: View {
                 if let time = item.time {
                     Text(time).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                 } else if isOverdue {
-                    Text("期限切れ").font(.caption2).foregroundStyle(.red)
+                    Text("Overdue").font(.caption2).foregroundStyle(.red)
                 } else if item.isDeadline {
-                    Text("期限").font(.caption2).foregroundStyle(.red)
+                    Text("Deadline").font(.caption2).foregroundStyle(.red)
                 }
             }
         }

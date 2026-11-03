@@ -27,7 +27,7 @@ struct TriageView: View {
             VStack(spacing: 24) {
                 let queue = queue
                 if let document = store.files[fileID]?.document, let current = queue.first {
-                    Text("残り \(queue.count)件")
+                    Text("\(queue.count) left")
                         .font(.subheadline.monospacedDigit())
                         .foregroundStyle(.secondary)
                         .contentTransition(.numericText())
@@ -41,7 +41,7 @@ struct TriageView: View {
             .padding(.vertical, 16)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("整理")
+            .navigationTitle("Sort")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -55,7 +55,7 @@ struct TriageView: View {
                 MoveSheet(request: request) { handled += 1 }
             }
             .sheet(item: $pickingDate) { headline in
-                DatePickerSheet(title: "予定日", date: date) { picked in
+                DatePickerSheet(title: "Schedule", date: date) { picked in
                     schedule(headline, on: OrgDate(picked))
                 }
             }
@@ -96,21 +96,21 @@ struct TriageView: View {
                 .id(current.identity)
                 .transition(.asymmetric(insertion: .scale(scale: 0.96).combined(with: .opacity),
                                         removal: .move(edge: .leading).combined(with: .opacity)))
-                .accessibilityAction(named: "移動") { moving = MoveRequest(fileID: fileID, line: current.lineIndex) }
-                .accessibilityAction(named: "削除") { delete(current, document: document) }
+                .accessibilityAction(named: "Move") { moving = MoveRequest(fileID: fileID, line: current.lineIndex) }
+                .accessibilityAction(named: "Delete") { delete(current, document: document) }
         }
         .frame(maxHeight: 360)
     }
 
     @ViewBuilder private var swipeHint: some View {
         if drag.width > 40 {
-            hint("移動", symbol: "folder", tint: .indigo)
+            hint("Move", symbol: "folder", tint: .indigo)
         } else if drag.width < -40 {
-            hint("削除", symbol: "trash", tint: .red)
+            hint("Delete", symbol: "trash", tint: .red)
         }
     }
 
-    private func hint(_ title: String, symbol: String, tint: Color) -> some View {
+    private func hint(_ title: LocalizedStringKey, symbol: String, tint: Color) -> some View {
         Label(title, systemImage: symbol)
             .font(.headline)
             .foregroundStyle(.white)
@@ -125,30 +125,30 @@ struct TriageView: View {
 
     private func actions(for headline: OrgHeadline, document: OrgDocument) -> some View {
         HStack(alignment: .top, spacing: 8) {
-            ActionButton(title: "移動", symbol: "folder", tint: .indigo) {
+            ActionButton(title: "Move", symbol: "folder", tint: .indigo) {
                 moving = MoveRequest(fileID: fileID, line: headline.lineIndex)
             }
             if headline.keyword == nil {
                 Menu {
                     dateChoices(for: headline, makingTask: true)
                 } label: {
-                    ActionLabel(title: "TODOにする", symbol: "checkmark.circle", tint: .blue)
+                    ActionLabel(title: "Make To-do", symbol: "checkmark.circle", tint: .blue)
                 }
             } else {
                 Menu {
                     dateChoices(for: headline, makingTask: false)
                 } label: {
-                    ActionLabel(title: "日付", symbol: "calendar", tint: .blue)
+                    ActionLabel(title: "Date", symbol: "calendar", tint: .blue)
                 }
-                ActionButton(title: "完了", symbol: "checkmark", tint: .green) {
+                ActionButton(title: "Done", symbol: "checkmark", tint: .green) {
                     store.edit(fileID) { $0.toggleDone(forHeadlineAt: headline.lineIndex) }
                     handled += 1
                 }
             }
-            ActionButton(title: "削除", symbol: "trash", tint: .red) {
+            ActionButton(title: "Delete", symbol: "trash", tint: .red) {
                 delete(headline, document: document)
             }
-            ActionButton(title: "あとで", symbol: "arrow.uturn.down", tint: .gray) {
+            ActionButton(title: "Later", symbol: "arrow.uturn.down", tint: .gray) {
                 withAnimation(.snappy) { _ = skipped.insert(headline.identity) }
             }
         }
@@ -156,16 +156,16 @@ struct TriageView: View {
 
     @ViewBuilder private func dateChoices(for headline: OrgHeadline, makingTask: Bool) -> some View {
         if makingTask {
-            Button("日付なし", systemImage: "circle") { schedule(headline, on: nil) }
+            Button("No Date", systemImage: "circle") { schedule(headline, on: nil) }
         }
-        Button("今日", systemImage: "sun.max") { schedule(headline, on: OrgDate(.now)) }
-        Button("明日", systemImage: "sunrise") { schedule(headline, on: OrgDate(.now).adding(days: 1)) }
-        Button("来週", systemImage: "calendar.badge.clock") {
+        Button("Today", systemImage: "sun.max") { schedule(headline, on: OrgDate(.now)) }
+        Button("Tomorrow", systemImage: "sunrise") { schedule(headline, on: OrgDate(.now).adding(days: 1)) }
+        Button("Next Week", systemImage: "calendar.badge.clock") {
             let monday = Calendar.current.nextDate(after: .now, matching: DateComponents(weekday: 2),
                                                    matchingPolicy: .nextTime) ?? .now
             schedule(headline, on: OrgDate(monday))
         }
-        Button("日付を選択…", systemImage: "calendar") {
+        Button("Choose Date…", systemImage: "calendar") {
             date = headline.scheduled?.date.date() ?? .now
             pickingDate = headline
         }
@@ -201,14 +201,14 @@ struct TriageView: View {
                 .foregroundStyle(.tint)
                 .symbolEffect(.bounce, value: handled)
                 .accessibilityHidden(true)
-            Text("すべて整理しました").font(.title2.bold())
+            Text("All Sorted").font(.title2.bold())
             Text(skipped.isEmpty
-                 ? "未整理のメモはありません。"
-                 : "あとでに回した\(skipped.count)件は、次に開いたときにもう一度表示されます。")
+                 ? "No unsorted memos."
+                 : "The \(skipped.count) memos you put off will show again next time.")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             Spacer()
-            Button("閉じる") { dismiss() }
+            Button("Close") { dismiss() }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
         }
@@ -236,7 +236,7 @@ private struct TriageCard: View {
             .font(.caption)
             .foregroundStyle(.secondary)
 
-            Text(headline.displayTitle.isEmpty ? "無題" : headline.displayTitle)
+            Text(headline.displayTitle.isEmpty ? String(localized: "Untitled") : headline.displayTitle)
                 .font(.title2.weight(.bold))
                 .lineLimit(3)
 
@@ -270,7 +270,7 @@ private struct TriageCard: View {
 }
 
 private struct ActionButton: View {
-    var title: String
+    var title: LocalizedStringKey
     var symbol: String
     var tint: Color
     var action: () -> Void
@@ -282,7 +282,7 @@ private struct ActionButton: View {
 }
 
 private struct ActionLabel: View {
-    var title: String
+    var title: LocalizedStringKey
     var symbol: String
     var tint: Color
 

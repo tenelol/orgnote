@@ -39,17 +39,17 @@ struct MoveSheet: View {
                     Section {
                         Label(title, systemImage: "doc.text").foregroundStyle(.secondary)
                     } header: {
-                        Text("移動するメモ")
+                        Text("Memo to Move")
                     }
                 }
-                Section("移動先") {
+                Section("Move To") {
                     ForEach(store.sortedFiles.filter { !$0.isPlaceholder }) { file in
                         notebookRow(file)
                     }
-                    Button("新しいノート…", systemImage: "plus") { ask(.notebook) }
+                    Button("Add Notebook…", systemImage: "plus") { ask(.notebook) }
                 }
             }
-            .navigationTitle("移動")
+            .navigationTitle("Move")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -58,10 +58,10 @@ struct MoveSheet: View {
             }
             .alert(namingTitle, isPresented: Binding { naming != nil } set: { if !$0 { naming = nil } },
                    presenting: naming) { item in
-                TextField(item.id == "notebook" ? "ノート名" : "見出し", text: $name)
-                Button("作成して移動") { create(item) }
+                TextField(item.id == "notebook" ? "Notebook Name" : "Heading", text: $name)
+                Button("Create and Move") { create(item) }
                     .keyboardShortcut(.defaultAction)
-                Button("キャンセル", role: .cancel) {}
+                Button("Cancel", role: .cancel) {}
             }
         }
         .presentationDetents([.medium, .large])
@@ -69,8 +69,8 @@ struct MoveSheet: View {
     }
 
     private var namingTitle: String {
-        if case .heading = naming { return "新しい見出し" }
-        return "新しいノート"
+        if case .heading = naming { return String(localized: "Add Heading") }
+        return String(localized: "Add Notebook")
     }
 
     private func notebookRow(_ file: OrgFile) -> some View {
@@ -87,13 +87,13 @@ struct MoveSheet: View {
                 Button {
                     move(to: file.id, under: heading.lineIndex)
                 } label: {
-                    Label(heading.displayTitle.isEmpty ? "無題" : heading.displayTitle,
+                    Label(heading.displayTitle.isEmpty ? String(localized: "Untitled") : heading.displayTitle,
                           systemImage: heading.level == 1 ? "number" : "arrow.turn.down.right")
                         .padding(.leading, CGFloat(heading.level - 1) * 16)
                 }
                 .tint(.primary)
             }
-            Button("見出しを追加…", systemImage: "plus") { ask(.heading(file.id)) }
+            Button("Add Heading…", systemImage: "plus") { ask(.heading(file.id)) }
                 .font(.subheadline)
         } label: {
             Button {
@@ -106,7 +106,7 @@ struct MoveSheet: View {
                 }
             }
             .tint(.primary)
-            .accessibilityHint("ノートの一番上の階層に移動します")
+            .accessibilityHint("Moves the memo to the top level of the notebook.")
         }
     }
 

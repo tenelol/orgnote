@@ -51,44 +51,44 @@ struct LibraryView: View {
             .padding(.bottom, 24)
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle(isRoot ? "メモ" : locationName)
+        .navigationTitle(isRoot ? String(localized: "Notes") : locationName)
         .navigationSubtitle(isRoot ? store.folderName : "")
         .overlay {
             if contents.files.isEmpty, contents.folders.isEmpty, !store.isRefreshing {
                 if isRoot {
                     ContentUnavailableView {
-                        Label("ノートがありません", systemImage: "books.vertical")
+                        Label("No Notebooks", systemImage: "books.vertical")
                     } description: {
-                        Text("書いたメモは \(store.inboxPath) に追記されます。")
+                        Text("Memos you write are added to \(store.inboxPath).")
                     } actions: {
-                        Button("新規メモ") { router.showCapture = true }
+                        Button("New Memo") { router.showCapture = true }
                             .buttonStyle(.borderedProminent)
                     }
                 } else {
-                    ContentUnavailableView("空のフォルダ", systemImage: "folder",
-                                           description: Text("右上のメニューからノートを作成できます。"))
+                    ContentUnavailableView("Empty Folder", systemImage: "folder",
+                                           description: Text("Create a notebook from the menu in the top-right corner."))
                 }
             }
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    Button("新規ノート…", systemImage: "book.closed") { ask(.file) }
-                    Button("新規フォルダ…", systemImage: "folder.badge.plus") { ask(.folder) }
+                    Button("New Notebook…", systemImage: "book.closed") { ask(.file) }
+                    Button("New Folder…", systemImage: "folder.badge.plus") { ask(.folder) }
                     if isRoot {
                         Divider()
-                        Button("設定", systemImage: "gearshape") { showSettings = true }
+                        Button("Settings", systemImage: "gearshape") { showSettings = true }
                     }
                 } label: {
-                    Label("その他", systemImage: "ellipsis")
+                    Label("More", systemImage: "ellipsis")
                 }
             }
         }
-        .alert(naming == .folder ? "新規フォルダ" : "新規ノート",
+        .alert(naming == .folder ? "New Folder" : "New Notebook",
                isPresented: Binding { naming != nil } set: { if !$0 { naming = nil } },
                presenting: naming) { item in
-            TextField(item == .folder ? "フォルダ名" : "ノート名", text: $newName)
-            Button("作成") {
+            TextField(item == .folder ? "Folder Name" : "Notebook Name", text: $newName)
+            Button("Create") {
                 Task {
                     switch item {
                     case .file: createdFile = await store.createFile(named: newName, in: folder)
@@ -97,9 +97,9 @@ struct LibraryView: View {
                 }
             }
             .keyboardShortcut(.defaultAction)
-            Button("キャンセル", role: .cancel) {}
+            Button("Cancel", role: .cancel) {}
         } message: { item in
-            Text(item == .folder ? "「\(locationName)」にフォルダを作成します。" : "「\(locationName)」に .org ファイルを作成します。")
+            Text(item == .folder ? "Creates a folder in “\(locationName)”." : "Creates an .org file in “\(locationName)”.")
         }
         .navigationDestination(item: $createdFile) { id in
             NotebookView(fileID: id)
@@ -107,22 +107,25 @@ struct LibraryView: View {
         .sheet(isPresented: $showSettings) { SettingsView() }
         .sheet(item: $editingCover) { target in CoverEditor(fileID: target.id) }
         .confirmationDialog(
-            deleting.map { "「\($0.displayName)」を削除しますか？" } ?? "",
+            deleting.map { String(localized: "Delete “\($0.displayName)”?") } ?? "",
             isPresented: Binding { deleting != nil } set: { if !$0 { deleting = nil } },
             titleVisibility: .visible,
             presenting: deleting
         ) { file in
-            Button("ノートを削除", role: .destructive) {
+            Button("Delete Notebook", role: .destructive) {
                 Task {
                     let deleted = await store.deleteFile(file.id)
                     UINotificationFeedbackGenerator().notificationOccurred(deleted ? .success : .error)
                 }
             }
-            Button("キャンセル", role: .cancel) {}
+            Button("Cancel", role: .cancel) {}
         } message: { file in
             let count = file.document.headlines.count
-            Text((count > 0 ? "中の見出し\(count)件も一緒に消えます。" : "")
-                + "削除前の内容は「設定 › バックアップ」に残ります。")
+            if count > 0 {
+                Text("This also deletes the \(count) headings inside. A copy is kept in Settings › Backups.")
+            } else {
+                Text("A copy is kept in Settings › Backups.")
+            }
         }
     }
 
@@ -132,10 +135,10 @@ struct LibraryView: View {
         let unsorted = store.inbox?.document.headlines.filter { $0.level == 1 && !$0.isDone }.count ?? 0
         return HStack(spacing: 12) {
             Button { router.requestedTab = .agenda } label: {
-                SmartTile(symbol: "calendar", tint: .red, count: today, title: "今日")
+                SmartTile(symbol: "calendar", tint: .red, count: today, title: String(localized: "Today"))
             }
             Button { router.showTriage = true } label: {
-                SmartTile(symbol: "tray", tint: .accentColor, count: unsorted, title: "未整理")
+                SmartTile(symbol: "tray", tint: .accentColor, count: unsorted, title: String(localized: "Unsorted"))
             }
         }
         .buttonStyle(.plain)
@@ -164,24 +167,24 @@ struct LibraryView: View {
     }
 
     @ViewBuilder private func coverMenu(_ file: OrgFile) -> some View {
-        Button("表紙を編集…", systemImage: "paintpalette") { editingCover = CoverTarget(id: file.id) }
+        Button("Edit Cover…", systemImage: "paintpalette") { editingCover = CoverTarget(id: file.id) }
         if file.id != store.inboxPath {
-            Button("新規メモの保存先にする", systemImage: "tray.and.arrow.down") { store.inboxPath = file.id }
+            Button("Save New Memos Here", systemImage: "tray.and.arrow.down") { store.inboxPath = file.id }
         }
-        Button("全体をテキストで開く", systemImage: "doc.plaintext") {
+        Button("Open as Plain Text", systemImage: "doc.plaintext") {
             router.paths[.notes, default: []].append(.file(file.id, line: nil))
         }
-        ShareLink(item: file.url) { Label("共有…", systemImage: "square.and.arrow.up") }
+        ShareLink(item: file.url) { Label("Share…", systemImage: "square.and.arrow.up") }
         // The capture target stays: new memos would just recreate it.
         if file.id != store.inboxPath {
             Divider()
-            Button("ノートを削除…", systemImage: "trash", role: .destructive) { deleting = file }
+            Button("Delete Notebook…", systemImage: "trash", role: .destructive) { deleting = file }
         }
     }
 
     private var unreadable: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("読めないファイル").font(.headline)
+            Text("Unreadable Files").font(.headline)
             ForEach(store.errors.sorted(by: { $0.key < $1.key }), id: \.key) { id, message in
                 Label {
                     VStack(alignment: .leading) {
@@ -229,7 +232,7 @@ private struct SmartTile: View {
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(title) \(count)件")
+        .accessibilityLabel("\(title): \(count)")
     }
 }
 
@@ -254,7 +257,7 @@ struct NotebookCover: View {
                     Image(systemName: "tray.and.arrow.down")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
-                        .accessibilityLabel("新規メモの保存先")
+                        .accessibilityLabel("Where new memos are saved")
                 }
             }
             Spacer(minLength: 8)
@@ -287,17 +290,19 @@ struct NotebookCover: View {
     }
 
     private var summary: String {
-        if file.isPlaceholder { return "iCloudからダウンロード中" }
+        if file.isPlaceholder { return String(localized: "Downloading from iCloud") }
         let headlines = file.document.headlines
         let tasks = headlines.filter { $0.keyword != nil }
         let open = tasks.filter { !$0.isDone }
         let today = OrgDate(.now)
         if let next = open.compactMap({ $0.deadline?.date ?? $0.scheduled?.date }).min() {
-            return next < today ? "期限切れあり · TODO \(open.count)" : "\(DateLabel.short(next)) · TODO \(open.count)"
+            return next < today
+                ? String(localized: "Overdue · \(open.count) to-dos")
+                : String(localized: "\(DateLabel.short(next)) · \(open.count) to-dos")
         }
-        if !tasks.isEmpty { return "TODO \(tasks.count - open.count)/\(tasks.count) 完了" }
+        if !tasks.isEmpty { return String(localized: "\(tasks.count - open.count)/\(tasks.count) to-dos done") }
         let notes = headlines.filter { $0.level <= 2 }.count
-        return notes == 0 ? "空のノート" : "メモ \(notes)件"
+        return notes == 0 ? String(localized: "Empty notebook") : String(localized: "\(notes) memos")
     }
 }
 
@@ -320,7 +325,7 @@ struct CoverEditor: View {
                             .listRowBackground(Color.clear)
                     }
                 }
-                Section("色") {
+                Section("Color") {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 12) {
                         ForEach(NotebookStyle.colors, id: \.name) { entry in
                             Button {
@@ -338,7 +343,7 @@ struct CoverEditor: View {
                         }
                     }
                 }
-                Section("アイコン") {
+                Section("Icon") {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 12) {
                         ForEach(NotebookStyle.symbols, id: \.self) { symbol in
                             Button {
@@ -357,14 +362,14 @@ struct CoverEditor: View {
                     }
                 }
             }
-            .navigationTitle("表紙")
+            .navigationTitle("Cover")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("キャンセル", systemImage: "xmark", role: .cancel) { dismiss() }
+                    Button("Cancel", systemImage: "xmark", role: .cancel) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("完了", systemImage: "checkmark", role: .confirm) {
+                    Button("Done", systemImage: "checkmark", role: .confirm) {
                         styles.set(style, for: fileID)
                         dismiss()
                     }
