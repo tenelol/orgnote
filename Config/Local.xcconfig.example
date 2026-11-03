@@ -10,3 +10,9 @@ ORGNOTE_BUNDLE_ID = com.yourname.orgnote
 // The App Group the app and widget share. Register it in the developer portal
 // (Identifiers › App Groups) when publishing; Xcode does it for development.
 ORGNOTE_APP_GROUP = group.$(ORGNOTE_BUNDLE_ID)
+
+// iCloud Drive (paid accounts only): notes sync across devices and appear as an
+// "Orgnote" folder in iCloud Drive. Register the container in the developer
+// portal (Identifiers › iCloud Containers) and add it to the App ID.
+// ORGNOTE_ENTITLEMENTS = App/Orgnote+iCloud.entitlements
+// ORGNOTE_ICLOUD_CONTAINER = iCloud.$(ORGNOTE_BUNDLE_ID)

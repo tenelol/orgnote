@@ -4,5 +4,9 @@
 ORGNOTE_BUNDLE_ID = com.example.orgnote
 ORGNOTE_APP_GROUP = group.$(ORGNOTE_BUNDLE_ID)
 DEVELOPMENT_TEAM =
+// Without iCloud the notes live on the device (Files › On My iPhone). iCloud
+// needs a paid developer account; see Local.xcconfig.example to turn it on.
+ORGNOTE_ENTITLEMENTS = App/Orgnote.entitlements
+ORGNOTE_ICLOUD_CONTAINER = iCloud.$(ORGNOTE_BUNDLE_ID)
 
 #include? "Local.xcconfig"

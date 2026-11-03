@@ -85,6 +85,29 @@ nonisolated enum FolderIO {
         return (result, folders)
     }
 
+    /// Where notes live when the user has not picked a folder: the app's own
+    /// iCloud Drive folder ("Orgnote"), or the device when iCloud is off. The
+    /// iCloud lookup can block, so call this off the main actor.
+    static func appFolder(iCloud: Bool) -> URL? {
+        let url = iCloud
+            ? FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents", isDirectory: true)
+            : URL.documentsDirectory
+        guard let url else { return nil }
+        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
+
+    /// Writes the starter notebooks into an empty folder and returns the
+    /// inbox's name; a folder that already has notes is left alone.
+    static func seedWelcome(in root: URL) -> String? {
+        guard list(root: root).files.isEmpty else { return nil }
+        let notes = WelcomeNotes.notes()
+        for note in [notes.inbox, notes.tour] {
+            try? write(note.text, to: root.appendingPathComponent(note.name))
+        }
+        return notes.inbox.name
+    }
+
     static func createFolder(at url: URL) throws {
         var coordinationError: NSError?
         var result: Result<Void, Error> = .success(())

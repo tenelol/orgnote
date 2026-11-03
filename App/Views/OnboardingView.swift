@@ -1,8 +1,13 @@
 import SwiftUI
 
+/// First launch: one tap to start in the app's own folder, or, for people
+/// who already keep Org files, a folder of their choosing.
 struct OnboardingView: View {
     @Environment(LibraryStore.self) private var store
     @State private var picking = false
+    @State private var starting = false
+    /// nil until the iCloud check returns.
+    @State private var iCloud: Bool?
 
     var body: some View {
         // Scrolls so every line and the button stay reachable at accessibility text sizes.
@@ -20,18 +25,18 @@ struct OnboardingView: View {
                     Text("Orgnoteへようこそ")
                         .font(.largeTitle.bold())
                         .multilineTextAlignment(.center)
-                    Text("iCloud Driveのフォルダを選ぶと、Macの ~/org とそのまま同期します。")
+                    Text("思いついたことをすぐに書いて、TODOや予定もまとめて見られるメモアプリです。")
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
 
                 VStack(alignment: .leading, spacing: 18) {
                     Feature(symbol: "square.and.pencil", title: "すぐに書ける",
-                            detail: "書いたメモは refile.org に追記され、あとから整理できます。")
-                    Feature(symbol: "calendar", title: "アジェンダ",
-                            detail: "予定日と期限から、今日やることをまとめて表示します。")
+                            detail: "「新規メモ」を押して書くだけ。1行目が見出しになります。")
+                    Feature(symbol: "calendar", title: "予定とTODO",
+                            detail: "日付を付けたTODOはアジェンダに並び、通知も設定できます。")
                     Feature(symbol: "doc.plaintext", title: "ただのテキスト",
-                            detail: "中身は.orgファイルなので、Macのエディタでもそのまま開けます。")
+                            detail: "ノートは .org ファイル。パソコンでも開けて、EmacsやNeovimのOrg-modeでもそのまま編集できます。")
                 }
             }
             .padding(.horizontal, 32)
@@ -40,25 +45,42 @@ struct OnboardingView: View {
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 12) {
                 Button {
-                    picking = true
+                    starting = true
+                    Task {
+                        await store.useAppFolder()
+                        starting = false
+                    }
                 } label: {
-                    Text("フォルダを選択")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
+                    Group {
+                        if starting { ProgressView() } else { Text("はじめる") }
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+                .disabled(starting || iCloud == nil)
+                .accessibilityIdentifier("onboarding.start")
 
-                Text("iCloud Drive › org を選んでください。フォルダは「ファイル」アプリで作成できます。")
+                Text(iCloud == true
+                     ? "ノートはiCloud Driveの「Orgnote」フォルダに保存され、ほかのデバイスとも同期します。"
+                     : "ノートはこのiPhoneに保存され、「ファイル」アプリの このiPhone内 › Orgnote から開けます。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
+                    .opacity(iCloud == nil ? 0 : 1)
+
+                Button("Org-modeのフォルダがある方はこちら") { picking = true }
+                    .font(.footnote.weight(.semibold))
+                    .disabled(starting)
+                    .accessibilityIdentifier("onboarding.pickFolder")
             }
             .padding(.horizontal, 32)
             .padding(.vertical, 12)
             .background(.bar)
         }
+        .task { iCloud = await LibraryStore.iCloudAvailable() }
         .fileImporter(isPresented: $picking, allowedContentTypes: [.folder]) { result in
             switch result {
             case let .success(url): store.choose(folder: url)

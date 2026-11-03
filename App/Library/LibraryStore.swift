@@ -66,11 +66,19 @@ final class LibraryStore {
         case starting, needsFolder, ready
     }
 
+    /// The app's own folder, as opposed to one the user picked.
+    enum Storage: String {
+        case iCloud = "icloud"
+        case device
+    }
+
     private(set) var phase: Phase = .starting
     private(set) var files: [String: OrgFile] = [:]
     /// Relative paths of every non-hidden folder, including empty ones.
     private(set) var folders: Set<String> = []
     private(set) var folderURL: URL?
+    /// nil while a folder the user picked is open.
+    private(set) var storage: Storage?
     private(set) var isRefreshing = false
     private(set) var errors: [String: String] = [:]
     var conflict: FileConflict?
@@ -92,6 +100,7 @@ final class LibraryStore {
 
     private enum Keys {
         static let bookmark = "folderBookmark"
+        static let storage = "storage"
         static let inbox = "inboxPath"
     }
 
@@ -101,7 +110,16 @@ final class LibraryStore {
 
     // MARK: Folder
 
-    var folderName: String { folderURL?.lastPathComponent ?? "Org" }
+    var folderName: String { storage == nil ? folderURL?.lastPathComponent ?? "Org" : "Orgnote" }
+
+    /// Where the notes are, as the Files app shows it.
+    var locationDescription: String {
+        switch storage {
+        case .iCloud: "iCloud Drive › Orgnote"
+        case .device: "このiPhone内 › Orgnote"
+        case nil: folderURL?.lastPathComponent ?? ""
+        }
+    }
 
     var sortedFiles: [OrgFile] {
         files.values.sorted { ($0.modified ?? .distantPast, $1.id) > ($1.modified ?? .distantPast, $0.id) }
@@ -118,6 +136,10 @@ final class LibraryStore {
             return
         }
         #endif
+        if let raw = UserDefaults.standard.string(forKey: Keys.storage), let storage = Storage(rawValue: raw) {
+            Task { await openAppFolder(storage, seeding: false) }
+            return
+        }
         guard let data = UserDefaults.standard.data(forKey: Keys.bookmark),
               let resolved = try? FolderIO.resolve(bookmark: data)
         else {
@@ -136,11 +158,40 @@ final class LibraryStore {
         defer { if ok { url.stopAccessingSecurityScopedResource() } }
         do {
             UserDefaults.standard.set(try FolderIO.bookmark(for: url), forKey: Keys.bookmark)
+            UserDefaults.standard.removeObject(forKey: Keys.storage)
+            storage = nil
         } catch {
             notice = Notice(message: "フォルダを記憶できませんでした。もう一度選んでください。（\(error.localizedDescription)）", isError: true)
             return
         }
         close()
+        open(url)
+    }
+
+    /// Whether this build and device can keep notes in iCloud Drive.
+    nonisolated static func iCloudAvailable() async -> Bool {
+        await Task.detached { FolderIO.appFolder(iCloud: true) != nil }.value
+    }
+
+    /// Starts in the app's own folder: iCloud Drive when it can, else the device.
+    /// A new folder gets the starter notebooks.
+    func useAppFolder() async {
+        await openAppFolder(await Self.iCloudAvailable() ? .iCloud : .device, seeding: true)
+    }
+
+    private func openAppFolder(_ storage: Storage, seeding: Bool) async {
+        guard let url = await Task.detached(operation: { FolderIO.appFolder(iCloud: storage == .iCloud) }).value else {
+            notice = Notice(message: "iCloud Driveに接続できません。設定でiCloudにサインインしているか確認してください。", isError: true)
+            phase = .needsFolder
+            return
+        }
+        if seeding, let inbox = await Task.detached(operation: { FolderIO.seedWelcome(in: url) }).value {
+            inboxPath = inbox
+        }
+        UserDefaults.standard.set(storage.rawValue, forKey: Keys.storage)
+        UserDefaults.standard.removeObject(forKey: Keys.bookmark)
+        close()
+        self.storage = storage
         open(url)
     }
 

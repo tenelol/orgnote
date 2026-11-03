@@ -16,10 +16,13 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
-                    LabeledContent("フォルダ", value: store.folderName)
-                    Button("フォルダを変更…") { picking = true }
+                    LabeledContent("保存場所", value: store.locationDescription)
+                    Button("別のフォルダを選ぶ…") { picking = true }
+                    if store.storage == nil {
+                        Button("Orgnoteのフォルダに戻す") { Task { await store.useAppFolder() } }
+                    }
                 } footer: {
-                    Text("iCloud Driveのフォルダを選ぶと、Macの ~/org などと同期します。")
+                    Text("ノートは .org ファイルです。iCloud Driveのフォルダを選ぶと、パソコンの ~/org などとそのまま同期できます。")
                 }
 
                 Section("新規メモ") {

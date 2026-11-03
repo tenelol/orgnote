@@ -49,11 +49,6 @@ targets:
     dependencies:
       - package: OrgKit
       - target: OrgnoteWidget
-    entitlements:
-      path: App/Orgnote.entitlements
-      properties:
-        com.apple.security.application-groups:
-          - $(ORGNOTE_APP_GROUP)
     info:
       path: App/Info.plist
       properties:
@@ -61,6 +56,9 @@ targets:
         CFBundleDevelopmentRegion: ja
         # Read by the app and widget to find their shared container.
         OrgnoteAppGroup: $(ORGNOTE_APP_GROUP)
+        # Notes kept on the device show up in Files › On My iPhone › Orgnote.
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
         # No encryption of its own, so App Store Connect asks for no export documents.
         ITSAppUsesNonExemptEncryption: false
         NSCalendarsFullAccessUsageDescription: Googleカレンダーなど、iPhoneのカレンダーの予定をアジェンダに並べて表示します。予定を変更することはありません。
@@ -92,6 +90,30 @@ targets:
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         SWIFT_APPROACHABLE_CONCURRENCY: YES
         CODE_SIGN_STYLE: Automatic
+        # App/Orgnote+iCloud.entitlements when the publisher turns on iCloud Drive.
+        CODE_SIGN_ENTITLEMENTS: $(ORGNOTE_ENTITLEMENTS)
+        # The iCloud script below edits the built Info.plist, which another
+        # build step produces, so it cannot declare it as its own output.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+    postBuildScripts:
+      - name: Publish the iCloud Drive folder
+        basedOnDependencyAnalysis: false
+        showEnvVars: false
+        script: |
+          # Info.plist keys are not expanded from build settings, so the
+          # container named in the xcconfig is added here, and only to builds
+          # signed with the iCloud entitlements.
+          case "$CODE_SIGN_ENTITLEMENTS" in *iCloud*) ;; *) exit 0 ;; esac
+          plist="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+          entry=":NSUbiquitousContainers:$ORGNOTE_ICLOUD_CONTAINER"
+          /usr/libexec/PlistBuddy -c "Delete :NSUbiquitousContainers" "$plist" 2>/dev/null || true
+          /usr/libexec/PlistBuddy \
+            -c "Add :NSUbiquitousContainers dict" \
+            -c "Add $entry dict" \
+            -c "Add $entry:NSUbiquitousContainerIsDocumentScopePublic bool true" \
+            -c "Add $entry:NSUbiquitousContainerName string Orgnote" \
+            -c "Add $entry:NSUbiquitousContainerSupportedFolderLevels string Any" \
+            "$plist"
   OrgnoteWidget:
     type: app-extension
     platform: iOS
@@ -105,14 +127,10 @@ targets:
         OrgnoteAppGroup: $(ORGNOTE_APP_GROUP)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
-    entitlements:
-      path: Widget/OrgnoteWidget.entitlements
-      properties:
-        com.apple.security.application-groups:
-          - $(ORGNOTE_APP_GROUP)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(ORGNOTE_BUNDLE_ID).widget
         TARGETED_DEVICE_FAMILY: "1,2"
         CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: Widget/OrgnoteWidget.entitlements
         SKIP_INSTALL: YES
