@@ -51,7 +51,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Calendar")
                 } footer: {
-                    Text("Add your Google account in iPhone Settings › Apps › Calendar › Calendar Accounts to see Google Calendar events in the agenda too. Events are only read, never changed.")
+                    Text("Add your Google account in Settings › Apps › Calendar › Calendar Accounts to see Google Calendar events in the agenda too. Events are only read, never changed.")
                 }
 
                 Section {
@@ -72,7 +72,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Reminders")
                 } footer: {
-                    Text("Set reminders with Add Reminder in a new memo. Reminders are kept only on this iPhone and aren’t written to your files. Reminders for completed to-dos don’t go off.")
+                    Text("Set reminders with Add Reminder in a new memo. Reminders are kept only on this device and aren’t written to your files. Reminders for completed to-dos don’t go off.")
                 }
 
                 Section {
@@ -91,7 +91,7 @@ struct SettingsView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("Allow access in iPhone Settings › Apps › Orgnote.")
+                Text("Allow access in Settings › Apps › Orgnote.")
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
@@ -140,7 +140,7 @@ private struct CalendarChoice: View {
         .overlay {
             if events.calendars.isEmpty {
                 ContentUnavailableView("No Calendars", systemImage: "calendar",
-                                       description: Text("Turn on the calendars for your Google account in iPhone Settings."))
+                                       description: Text("Turn on the calendars for your Google account in Settings."))
             }
         }
     }

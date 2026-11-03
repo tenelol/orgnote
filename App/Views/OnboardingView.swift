@@ -39,8 +39,11 @@ struct OnboardingView: View {
                             detail: "Notebooks are .org files. Open them on your computer and edit them as they are in Org mode for Emacs or Neovim.")
                 }
             }
+            // A readable column on iPad and in landscape.
+            .frame(maxWidth: 560)
             .padding(.horizontal, 32)
             .padding(.bottom, 24)
+            .frame(maxWidth: .infinity)
         }
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 12) {
@@ -65,6 +68,8 @@ struct OnboardingView: View {
 
                 Text(iCloud == true
                      ? "Notebooks are saved in the Orgnote folder in iCloud Drive and sync with your other devices."
+                     : UIDevice.current.userInterfaceIdiom == .pad
+                     ? "Notebooks are saved on this iPad. Open them in the Files app under On My iPad › Orgnote."
                      : "Notebooks are saved on this iPhone. Open them in the Files app under On My iPhone › Orgnote.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -78,8 +83,10 @@ struct OnboardingView: View {
                     .disabled(starting)
                     .accessibilityIdentifier("onboarding.pickFolder")
             }
+            .frame(maxWidth: 560)
             .padding(.horizontal, 32)
             .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
             // Solid, so the green link text keeps its contrast.
             .background(Color(.systemBackground))
         }

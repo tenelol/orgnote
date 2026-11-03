@@ -32,6 +32,7 @@ jobs:
             -project Orgnote.xcodeproj \
             -scheme Orgnote \
             -destination 'platform=iOS Simulator,name=iPhone 17' \
+            -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)' \
             -resultBundlePath TestResults.xcresult
 
       - name: Keep the test results

@@ -116,7 +116,10 @@ final class LibraryStore {
     var locationDescription: String {
         switch storage {
         case .iCloud: "iCloud Drive › Orgnote"
-        case .device: String(localized: "On My iPhone › Orgnote")
+        // The Files app names the device's own folder after the device.
+        case .device: UIDevice.current.userInterfaceIdiom == .pad
+            ? String(localized: "On My iPad › Orgnote")
+            : String(localized: "On My iPhone › Orgnote")
         case nil: folderURL?.lastPathComponent ?? ""
         }
     }

@@ -59,7 +59,8 @@ final class AccessibilityAuditTests: XCTestCase {
         app.navigationBars.buttons.firstMatch.tap()
 
         for tab in ["Agenda", "To-dos", "Search"] {
-            app.tabBars.buttons[tab].tap()
+            let button = app.tabBars.buttons[tab]
+            if button.exists { button.tap() } else { app.buttons[tab].firstMatch.tap() }
             sleep(1)
             try audit(tab)
         }

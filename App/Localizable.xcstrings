@@ -578,12 +578,12 @@
         }
       }
     },
-    "Add your Google account in iPhone Settings › Apps › Calendar › Calendar Accounts to see Google Calendar events in the agenda too. Events are only read, never changed.": {
+    "Add your Google account in Settings › Apps › Calendar › Calendar Accounts to see Google Calendar events in the agenda too. Events are only read, never changed.": {
       "localizations": {
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "iPhoneの設定 › アプリ › カレンダー › カレンダーアカウントにGoogleアカウントを追加すると、Googleカレンダーの予定もアジェンダに並びます。予定は読むだけで変更しません。"
+            "value": "設定アプリの アプリ › カレンダー › カレンダーアカウント にGoogleアカウントを追加すると、Googleカレンダーの予定もアジェンダに並びます。予定は読むだけで変更しません。"
           }
         }
       }
@@ -668,12 +668,12 @@
         }
       }
     },
-    "Allow access in iPhone Settings › Apps › Orgnote.": {
+    "Allow access in Settings › Apps › Orgnote.": {
       "localizations": {
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "iPhoneの設定 › アプリ › Orgnote で許可すると使えます。"
+            "value": "設定アプリの アプリ › Orgnote で許可すると使えます。"
           }
         }
       }
@@ -1986,6 +1986,16 @@
         }
       }
     },
+    "Notebooks are saved on this iPad. Open them in the Files app under On My iPad › Orgnote.": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノートはこのiPadに保存され、「ファイル」アプリの このiPad内 › Orgnote から開けます。"
+          }
+        }
+      }
+    },
     "Notebooks are saved on this iPhone. Open them in the Files app under On My iPhone › Orgnote.": {
       "localizations": {
         "ja": {
@@ -2042,6 +2052,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "今週が期限のものはありません"
+          }
+        }
+      }
+    },
+    "On My iPad › Orgnote": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このiPad内 › Orgnote"
           }
         }
       }
@@ -2322,12 +2342,12 @@
         }
       }
     },
-    "Set reminders with Add Reminder in a new memo. Reminders are kept only on this iPhone and aren’t written to your files. Reminders for completed to-dos don’t go off.": {
+    "Set reminders with Add Reminder in a new memo. Reminders are kept only on this device and aren’t written to your files. Reminders for completed to-dos don’t go off.": {
       "localizations": {
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "新規メモの「通知を追加」で設定します。通知はこのiPhoneだけに保存され、ファイルには書き込みません。完了したTODOの通知は鳴りません。"
+            "value": "新規メモの「通知を追加」で設定します。通知はこの端末だけに保存され、ファイルには書き込みません。完了したTODOの通知は鳴りません。"
           }
         }
       }
@@ -2686,12 +2706,12 @@
         }
       }
     },
-    "Turn on the calendars for your Google account in iPhone Settings.": {
+    "Turn on the calendars for your Google account in Settings.": {
       "localizations": {
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "iPhoneの設定でGoogleアカウントのカレンダーをオンにしてください。"
+            "value": "設定アプリでGoogleアカウントのカレンダーをオンにしてください。"
           }
         }
       }

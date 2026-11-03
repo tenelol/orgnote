@@ -29,14 +29,14 @@ final class OrgnoteUITests: XCTestCase {
     }
 
     func testFinishingATodoFillsTodaysRing() {
-        app.tabBars.buttons["Agenda"].tap()
+        openTab("Agenda")
         XCTAssertTrue(element(labeled: "0 of 1 to-do done today").waitForExistence(timeout: 5))
         app.buttons["Mark as Done"].firstMatch.tap()
         XCTAssertTrue(element(labeled: "1 of 1 to-do done today").waitForExistence(timeout: 5))
     }
 
     func testSearchFindsAHeading() {
-        app.tabBars.buttons["Search"].tap()
+        openTab("Search")
         let field = app.searchFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 5))
         field.tap()
@@ -62,6 +62,12 @@ final class OrgnoteUITests: XCTestCase {
     }
 
     // MARK: Steps
+
+    /// iPhone shows a tab bar; iPad shows the same tabs in a sidebar or top bar.
+    private func openTab(_ name: String) {
+        let tab = app.tabBars.buttons[name]
+        if tab.exists { tab.tap() } else { app.buttons[name].firstMatch.tap() }
+    }
 
     /// The progress ring is a plain element in the toolbar, not a button.
     private func element(labeled label: String) -> XCUIElement {
