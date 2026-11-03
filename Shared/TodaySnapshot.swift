@@ -19,7 +19,8 @@ nonisolated struct TodaySnapshot: Codable, Sendable, Equatable {
 
     var items: [Item]
 
-    static let appGroup = "group.dev.tenelol.orgnote"
+    /// Set per build from Config/*.xcconfig, so each publisher uses their own group.
+    static let appGroup = Bundle.main.object(forInfoDictionaryKey: "OrgnoteAppGroup") as? String ?? ""
     static let widgetKind = "TodayTodos"
 
     static var url: URL? {

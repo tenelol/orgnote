@@ -1,0 +1,12 @@
+// Copy to Config/Local.xcconfig and set your own values. The file is
+// gitignored, so each developer or publisher keeps their own identity.
+
+// Your Apple Developer team ID (Xcode › Settings › Accounts, or developer.apple.com › Membership).
+DEVELOPMENT_TEAM = ABCDE12345
+
+// A bundle ID you own. The widget becomes <this>.widget.
+ORGNOTE_BUNDLE_ID = com.yourname.orgnote
+
+// The App Group the app and widget share. Register it in the developer portal
+// (Identifiers › App Groups) when publishing; Xcode does it for development.
+ORGNOTE_APP_GROUP = group.$(ORGNOTE_BUNDLE_ID)

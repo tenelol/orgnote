@@ -32,9 +32,11 @@ mkdir -p ~/Library/Mobile\ Documents/com~apple~CloudDocs/org
 
 ## 実機への自動インストール
 
-無料の個人チームで署名したアプリは7日で起動しなくなる。`scripts/refresh-device.sh <UDID>` は、プロファイルの残りが3日（`ORGNOTE_RENEW_DAYS`）を切ったときだけ新しいプロファイルを取得し、`main` にコミット済みの内容をビルドしてiPhoneに入れ直す。iPhoneに届かないときは何もせずに終わる。このMacではdotfilesの `orgnote-refresh` モジュールがlaunchdで6時間ごとに実行し、ログを `~/Library/Logs/orgnote-refresh.log` に残す。
+無料の個人チームで署名したアプリは7日で起動しなくなる。`scripts/refresh-device.sh <UDID>` は、`Config/Local.xcconfig` の署名設定で、プロファイルの残りが3日（`ORGNOTE_RENEW_DAYS`）を切ったときだけ新しいプロファイルを取得し、`main` にコミット済みの内容をビルドしてiPhoneに入れ直す。iPhoneに届かないときは何もせずに終わる。このMacではdotfilesの `orgnote-refresh` モジュールがlaunchdで6時間ごとに実行し、ログを `~/Library/Logs/orgnote-refresh.log` に残す。
 
 ## 開発
+
+バンドルID・App Group・チームは `Config/Orgnote.xcconfig` にまとめてあり、既定値（`com.example.orgnote`、チームなし）のままでシミュレータで動く。実機やApp Store向けに署名するときは、`Config/Local.xcconfig.example` を `Config/Local.xcconfig` にコピーして自分の値を入れる（gitには入らない）。
 
 ```bash
 xcodegen generate

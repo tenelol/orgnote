@@ -1,0 +1,8 @@
+// Identity every build uses. These defaults build and run in the Simulator
+// without an Apple account; to sign for a device or the App Store, copy
+// Local.xcconfig.example to Local.xcconfig (gitignored) and fill it in.
+ORGNOTE_BUNDLE_ID = com.example.orgnote
+ORGNOTE_APP_GROUP = group.$(ORGNOTE_BUNDLE_ID)
+DEVELOPMENT_TEAM =
+
+#include? "Local.xcconfig"

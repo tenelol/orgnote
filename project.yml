@@ -1,12 +1,16 @@
 name: Orgnote
 options:
-  bundleIdPrefix: dev.tenelol
+  bundleIdPrefix: com.example
   deploymentTarget:
     iOS: "26.1"
   createIntermediateGroups: true
   # The Nix build of XcodeGen ships without its setting presets, so the
   # defaults Xcode templates normally provide are spelled out here.
   settingPresets: none
+# Bundle ID, App Group and team come from here (and Config/Local.xcconfig).
+configFiles:
+  Debug: Config/Orgnote.xcconfig
+  Release: Config/Orgnote.xcconfig
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -49,12 +53,16 @@ targets:
       path: App/Orgnote.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.dev.tenelol.orgnote
+          - $(ORGNOTE_APP_GROUP)
     info:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: Orgnote
         CFBundleDevelopmentRegion: ja
+        # Read by the app and widget to find their shared container.
+        OrgnoteAppGroup: $(ORGNOTE_APP_GROUP)
+        # No encryption of its own, so App Store Connect asks for no export documents.
+        ITSAppUsesNonExemptEncryption: false
         NSCalendarsFullAccessUsageDescription: Googleカレンダーなど、iPhoneのカレンダーの予定をアジェンダに並べて表示します。予定を変更することはありません。
         # Matches the grouped list background so launch fades straight into the library.
         UILaunchScreen:
@@ -63,7 +71,7 @@ targets:
           UIApplicationSupportsMultipleScenes: true
         # Widget taps open orgnote://agenda or orgnote://file?id=…&line=….
         CFBundleURLTypes:
-          - CFBundleURLName: dev.tenelol.orgnote
+          - CFBundleURLName: $(ORGNOTE_BUNDLE_ID)
             CFBundleURLSchemes:
               - orgnote
         UISupportedInterfaceOrientations:
@@ -77,14 +85,13 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: dev.tenelol.orgnote
+        PRODUCT_BUNDLE_IDENTIFIER: $(ORGNOTE_BUNDLE_ID)
         TARGETED_DEVICE_FAMILY: "1,2"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         SWIFT_APPROACHABLE_CONCURRENCY: YES
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: 7G85M3YH8D
   OrgnoteWidget:
     type: app-extension
     platform: iOS
@@ -95,17 +102,17 @@ targets:
       path: Widget/Info.plist
       properties:
         CFBundleDisplayName: Orgnote
+        OrgnoteAppGroup: $(ORGNOTE_APP_GROUP)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
       path: Widget/OrgnoteWidget.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.dev.tenelol.orgnote
+          - $(ORGNOTE_APP_GROUP)
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: dev.tenelol.orgnote.widget
+        PRODUCT_BUNDLE_IDENTIFIER: $(ORGNOTE_BUNDLE_ID).widget
         TARGETED_DEVICE_FAMILY: "1,2"
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: 7G85M3YH8D
         SKIP_INSTALL: YES

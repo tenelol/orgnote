@@ -8,3 +8,4 @@ Orgnote.xcodeproj/
 App/Info.plist
 Widget/Info.plist
 *.entitlements
+Config/Local.xcconfig

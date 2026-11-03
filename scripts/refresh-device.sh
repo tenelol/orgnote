@@ -7,8 +7,11 @@ set -euo pipefail
 
 device="${1:?usage: refresh-device.sh <device-udid>}"
 renew_days="${ORGNOTE_RENEW_DAYS:-3}"
-bundle_id="dev.tenelol.orgnote"
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# The signing identity lives in the gitignored Config/Local.xcconfig.
+local_config="$repo/Config/Local.xcconfig"
+[ -f "$local_config" ] || { echo "Config/Local.xcconfig is missing; copy Local.xcconfig.example" >&2; exit 1; }
+bundle_id="$(sed -n 's/^ORGNOTE_BUNDLE_ID *= *//p' "$local_config" | tail -1)"
 profiles="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
 state="$HOME/Library/Application Support/Orgnote/refresh"
 work="$(mktemp -d)"
@@ -71,6 +74,7 @@ restore_profiles() {
 # Build what is committed on main, never a half-edited working tree.
 mkdir "$work/src"
 git -C "$repo" archive main | tar -x -C "$work/src"
+cp "$local_config" "$work/src/Config/Local.xcconfig"
 (cd "$work/src" && xcodegen generate --quiet)
 if ! xcodebuild -project "$work/src/Orgnote.xcodeproj" -scheme Orgnote -configuration Release \
   -destination "id=$device" -derivedDataPath "$state/DerivedData" \
