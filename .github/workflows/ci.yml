@@ -26,6 +26,8 @@ jobs:
       - name: Generate the project
         run: xcodegen generate
 
+      # Hosted simulators sometimes time out launching the app, so a failed
+      # test gets one more run before it fails the build.
       - name: End-to-end tests
         run: |
           xcodebuild test \
@@ -33,11 +35,12 @@ jobs:
             -scheme Orgnote \
             -destination 'platform=iOS Simulator,name=iPhone 17' \
             -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)' \
+            -retry-tests-on-failure -test-iterations 2 \
             -resultBundlePath TestResults.xcresult
 
       - name: Keep the test results
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: TestResults
           path: TestResults.xcresult
