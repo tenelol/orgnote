@@ -27,15 +27,22 @@ jobs:
         run: xcodegen generate
 
       # Hosted simulators sometimes time out launching the app, so a failed
-      # test gets one more run before it fails the build.
+      # test gets one more run before it fails the build. The accessibility
+      # audit takes minutes per screen on these runners, so it runs only when
+      # the workflow is started by hand.
       - name: End-to-end tests
         run: |
+          skip=()
+          if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ]; then
+            skip=(-skip-testing:OrgnoteUITests/AccessibilityAuditTests)
+          fi
           xcodebuild test \
             -project Orgnote.xcodeproj \
             -scheme Orgnote \
             -destination 'platform=iOS Simulator,name=iPhone 17' \
             -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)' \
             -retry-tests-on-failure -test-iterations 2 \
+            "${skip[@]}" \
             -resultBundlePath TestResults.xcresult
 
       - name: Keep the test results

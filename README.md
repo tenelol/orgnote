@@ -53,7 +53,7 @@ swift test --package-path Packages/OrgKit
 xcodebuild test -project Orgnote.xcodeproj -scheme Orgnote -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
-The second command runs the end-to-end tests in `UITests/`: on a fresh install they get started, add and sort memos, finish a to-do from the agenda, search, and delete a notebook. GitHub Actions runs both on every push and pull request.
+The second command runs the end-to-end tests in `UITests/`: on a fresh install they get started, add and sort memos, finish a to-do from the agenda, search, and delete a notebook; `AccessibilityAuditTests` runs Xcode's accessibility audit on each main screen. GitHub Actions runs both on every push and pull request, and adds the audit when the workflow is started by hand.
 
 ### Project layout
 
