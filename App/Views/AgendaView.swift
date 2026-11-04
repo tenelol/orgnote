@@ -226,6 +226,20 @@ private struct DayStrip: View {
                 withAnimation(.snappy) { proxy.scrollTo(date, anchor: .center) }
             }
         }
+        // One adjustable element for VoiceOver, swiped up or down a day at a time,
+        // rather than a year of buttons to step through.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Date")
+        .accessibilityValue(spokenLabel(selected, items: items[selected]?.count ?? 0, events: events[selected]?.count))
+        .accessibilityAdjustableAction { direction in
+            let step = switch direction {
+            case .increment: 1
+            case .decrement: -1
+            @unknown default: 0
+            }
+            let next = selected.adding(days: step)
+            if step != 0, dates.contains(next) { selected = next }
+        }
         .sensoryFeedback(.selection, trigger: selected)
     }
 
@@ -262,8 +276,6 @@ private struct DayStrip: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(spokenLabel(date, items: items.count, events: events[date]?.count))
-        .accessibilityAddTraits(date == selected ? .isSelected : [])
     }
 
     private func spokenLabel(_ date: OrgDate, items: Int, events: Int?) -> String {

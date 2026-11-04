@@ -35,6 +35,17 @@ final class OrgnoteUITests: XCTestCase {
         XCTAssertTrue(element(labeled: "1 of 1 to-do done today").waitForExistence(timeout: 5))
     }
 
+    /// VoiceOver meets the day strip as one adjustable element on the chosen
+    /// day, not a year of buttons.
+    func testDayStripIsOneElementForVoiceOver() {
+        openTab("Agenda")
+        let strip = element(labeled: "Date")
+        XCTAssertTrue(strip.waitForExistence(timeout: 5))
+        let today = Date.now.formatted(Date.FormatStyle().month().day().weekday(.wide).locale(Locale(identifier: "en_US")))
+        XCTAssertTrue((strip.value as? String)?.hasPrefix(today) == true, "\(strip.value ?? "nil")")
+        XCTAssertFalse(app.buttons[today].exists)
+    }
+
     func testSearchFindsAHeading() {
         openTab("Search")
         let field = app.searchFields.firstMatch
